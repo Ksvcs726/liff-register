@@ -23,7 +23,7 @@
       /* 條碼區塊 (滿版白底、放大條碼) */
       .barcode-container { background: white; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; }
       .barcode-tip { font-size: 13px; color: #666; margin-bottom: 8px; font-weight: bold; }
-      #barcode { width: 100%; max-width: 320px; height: auto; }
+      #barcode { width: 100%; max-width: 220px; height: auto; }
       
       /* 消費紀錄設計 */
       .history-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -120,10 +120,10 @@
             JsBarcode("#barcode", data.studentId.toString(), {
               format: "CODE128",
               lineColor: "#000",
-              width: 2.5,          // 增加條碼線條寬度
-              height: 70,          // 增加條碼高度
+              width: 2,          // 增加條碼線條寬度
+              height: 55,          // 增加條碼高度
               displayValue: true,  
-              fontSize: 22,        // 放大條碼下方的數字
+              fontSize: 20,        // 放大條碼下方的數字
               margin: 0
             });
             
