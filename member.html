@@ -7,19 +7,30 @@
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
       
-      /* 會員卡片設計 */
-      .card { background: linear-gradient(135deg, #6B4FA2, #493375); color: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px rgba(107, 79, 162, 0.3); margin-bottom: 24px; position: relative; overflow: hidden; text-align: center; }
-      .card-title { font-size: 14px; opacity: 0.9; margin-bottom: 5px; text-align: left; }
-      .balance { font-size: 40px; font-weight: bold; margin: 10px 0; }
-      .student-info { font-size: 16px; opacity: 0.9; letter-spacing: 1px; margin-bottom: 15px; }
+      /* 會員卡片設計 (保留紫色漸層，改為靠左對齊) */
+      .card { background: linear-gradient(135deg, #6B4FA2, #493375); color: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px rgba(107, 79, 162, 0.3); margin-bottom: 24px; position: relative; overflow: hidden; text-align: left; }
+      .card-title { font-size: 14px; opacity: 0.9; margin-bottom: 20px; }
       
-      /* 條碼區塊 (加上白色背景讓掃描槍好掃描) */
-      .barcode-container { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin-top: 10px; }
-      #barcode { width: 100%; max-width: 250px; height: auto; }
+      /* 姓名與班級學號 */
+      .student-name { font-size: 28px; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; }
+      .student-meta { font-size: 14px; opacity: 0.9; letter-spacing: 1px; margin-bottom: 20px; }
+      
+      /* 餘額區塊 (半透明黑底，黃色字體) */
+      .balance-box { background: rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+      .balance-label { font-size: 16px; }
+      .balance-amount { font-size: 26px; font-weight: bold; color: #FFD700; letter-spacing: 1px; }
+      
+      /* 條碼區塊 (滿版白底、放大條碼) */
+      .barcode-container { background: white; padding: 15px; border-radius: 12px; text-align: center; width: 100%; box-sizing: border-box; }
+      .barcode-tip { font-size: 13px; color: #666; margin-bottom: 8px; font-weight: bold; }
+      #barcode { width: 100%; max-width: 320px; height: auto; }
       
       /* 消費紀錄設計 */
       .history-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-      .history-title { font-size: 18px; color: #333; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+      .history-title { font-size: 18px; color: #333; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px; display: flex; align-items: center; }
+      /* 標題旁邊的藍色小色塊 */
+      .history-title::before { content: ''; display: inline-block; width: 4px; height: 18px; background-color: #1677ff; margin-right: 8px; border-radius: 2px; }
+      
       .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
       .history-item:last-child { border-bottom: none; }
       .item-name { color: #333; font-weight: bold; font-size: 16px; }
@@ -41,25 +52,32 @@
       <!-- 虛擬會員卡 -->
       <div class="card">
         <div class="card-title">💳 雄商合作社 - 數位儲值卡</div>
-        <div class="balance">$<span id="balanceDisplay">0</span></div>
-        <div class="student-info"><span id="classDisplay"></span> | <span id="idDisplay"></span> | <span id="nameDisplay"></span></div>
+        
+        <div class="student-name" id="nameDisplay"></div>
+        <div class="student-meta"><span id="classDisplay"></span> 班 | 學號：<span id="idDisplay"></span></div>
+        
+        <div class="balance-box">
+          <span class="balance-label">儲值卡餘額</span>
+          <span class="balance-amount">$ <span id="balanceDisplay">0</span></span>
+        </div>
         
         <!-- 一維條碼顯示區 -->
         <div class="barcode-container">
+          <div class="barcode-tip">出示條碼供合作社掃描</div>
           <svg id="barcode"></svg>
         </div>
       </div>
       
       <!-- 歷史紀錄 -->
       <div class="history-container">
-        <div class="history-title">🕒 今日消費紀錄</div>
+        <div class="history-title">歷史消費紀錄</div>
         <div id="historyList"></div>
       </div>
     </div>
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-      // ⚠️ 請務必確認這是您最新部署的 GAS 網址
+      // ⚠️ 確保此為您的最新 GAS Exec 網址
       const gasUrl = "https://script.google.com/macros/s/AKfycbzTstvDqugK3Ha0r_qW_Jwezg2ntLsNwkLaXHVDliiZnVE6EyED0X-6YS38FJnUXzSkKQ/exec";
 
       window.onload = function() {
@@ -98,14 +116,15 @@
             document.getElementById('idDisplay').innerText = data.studentId;
             document.getElementById('nameDisplay').innerText = data.name;
             
-            // 產生一維條碼 (Code128 格式，合作社掃描槍最通用)
+            // 產生一維條碼 (加寬、加高、放大字體)
             JsBarcode("#barcode", data.studentId.toString(), {
               format: "CODE128",
               lineColor: "#000",
-              width: 2,
-              height: 50,
-              displayValue: true, // 顯示條碼下方的數字
-              fontSize: 16
+              width: 2.5,          // 增加條碼線條寬度
+              height: 70,          // 增加條碼高度
+              displayValue: true,  
+              fontSize: 22,        // 放大條碼下方的數字
+              margin: 0
             });
             
             // 渲染消費紀錄
@@ -125,7 +144,7 @@
               });
               historyList.innerHTML = html;
             } else {
-              historyList.innerHTML = '<div style="text-align:center; color:#888; padding:20px 0;">今日尚無消費紀錄</div>';
+              historyList.innerHTML = '<div style="text-align:center; color:#888; padding:20px 0;">尚無消費紀錄</div>';
             }
             
             // 切換畫面
