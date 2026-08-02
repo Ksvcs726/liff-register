@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>雄商合作社 - 數位會員卡</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
+      
+      /* 會員卡片設計 */
+      .card { background: linear-gradient(135deg, #6B4FA2, #493375); color: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px rgba(107, 79, 162, 0.3); margin-bottom: 24px; position: relative; overflow: hidden; }
+      .card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+      .card-title { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
+      .balance { font-size: 40px; font-weight: bold; margin: 10px 0; }
+      .student-info { font-size: 16px; opacity: 0.9; letter-spacing: 1px; }
+      
+      /* 消費紀錄設計 */
+      .history-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+      .history-title { font-size: 18px; color: #333; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+      .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
+      .history-item:last-child { border-bottom: none; }
+      .item-name { color: #333; font-weight: bold; font-size: 16px; }
+      .item-time { color: #888; font-size: 12px; margin-top: 4px; }
+      .item-price { color: #ff4d4f; font-weight: bold; font-size: 16px; }
+      
+      /* 狀態顯示 */
+      #loading { text-align: center; color: #6B4FA2; margin-top: 60px; font-size: 16px; font-weight: bold; }
+      #content { display: none; }
+      .error-msg { color: #ff3333; }
+    </style>
+  </head>
+  <body>
+    <div id="loading">📡 正在從資料庫讀取會員卡...</div>
+    
+    <div id="content">
+      <!-- 虛擬會員卡 -->
+      <div class="card">
+        <div class="card-title">💳 雄商合作社 - 數位儲值卡</div>
+        <div class="balance">$<span id="balanceDisplay">0</span></div>
+        <div class="student-info"><span id="classDisplay"></span> | <span id="idDisplay"></span> | <span id="nameDisplay"></span></div>
+      </div>
+      
+      <!-- 歷史紀錄 -->
+      <div class="history-container">
+        <div class="history-title">🕒 今日消費紀錄</div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+      // ⚠️ 請務必確認這是您最新部署的 GAS 網址
+      const gasUrl = "https://script.google.com/macros/s/AKfycbzTstvDqugK3Ha0r_qW_Jwezg2ntLsNwkLaXHVDliiZnVE6EyED0X-6YS38FJnUXzSkKQ/exec";
+
+      window.onload = function() {
+        liff.init({ liffId: "2010935415-kh7DMjtm" }).then(() => {
+          if (liff.isLoggedIn()) {
+            const idToken = liff.getDecodedIDToken();
+            const userUid = (idToken && idToken.sub) ? idToken.sub : liff.getContext().userId;
+            
+            if (userUid) {
+              fetchMemberData(userUid);
+            } else {
+              showError("無法取得 LINE 身分，請重新打開網頁。");
+            }
+          } else {
+            liff.login();
+          }
+        }).catch(err => {
+          showError("系統初始化失敗：" + err);
+        });
+      };
+
+      function fetchMemberData(uid) {
+        const requestBody = { action: "getMemberData", uid: uid };
+        
+        fetch(gasUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(requestBody)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.found) {
+            // 寫入資料到卡片上
+            document.getElementById('balanceDisplay').innerText = data.balance;
+            document.getElementById('classDisplay').innerText = data.className;
+            document.getElementById('idDisplay').innerText = data.studentId;
+            document.getElementById('nameDisplay').innerText = data.name;
+            
+            // 渲染消費紀錄
+            const historyList = document.getElementById('historyList');
+            if (data.history && data.history.length > 0) {
+              let html = "";
+              data.history.forEach(item => {
+                html += `
+                  <div class="history-item">
+                    <div>
+                      <div class="item-name">${item.itemName}</div>
+                      <div class="item-time">${item.time}</div>
+                    </div>
+                    <div class="item-price">-$${item.price}</div>
+                  </div>
+                `;
+              });
+              historyList.innerHTML = html;
+            } else {
+              historyList.innerHTML = '<div style="text-align:center; color:#888; padding:20px 0;">今日尚無消費紀錄</div>';
+            }
+            
+            // 切換畫面
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+          } else {
+            showError("找不到您的帳號資料！\n請先點擊選單完成「註冊綁定」。");
+          }
+        })
+        .catch(err => {
+          showError("連線至資料庫失敗，請稍後再試。");
+        });
+      }
+
+      function showError(msg) {
+        document.getElementById('loading').innerText = "❌ " + msg;
+        document.getElementById('loading').className = "error-msg";
+      }
+    </script>
+  </body>
+</html>
