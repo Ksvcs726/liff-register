@@ -8,11 +8,14 @@
       body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; box-sizing: border-box; }
       
       /* 會員卡片設計 */
-      .card { background: linear-gradient(135deg, #6B4FA2, #493375); color: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px rgba(107, 79, 162, 0.3); margin-bottom: 24px; position: relative; overflow: hidden; }
-      .card::after { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; }
-      .card-title { font-size: 14px; opacity: 0.9; margin-bottom: 5px; }
+      .card { background: linear-gradient(135deg, #6B4FA2, #493375); color: white; border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px rgba(107, 79, 162, 0.3); margin-bottom: 24px; position: relative; overflow: hidden; text-align: center; }
+      .card-title { font-size: 14px; opacity: 0.9; margin-bottom: 5px; text-align: left; }
       .balance { font-size: 40px; font-weight: bold; margin: 10px 0; }
-      .student-info { font-size: 16px; opacity: 0.9; letter-spacing: 1px; }
+      .student-info { font-size: 16px; opacity: 0.9; letter-spacing: 1px; margin-bottom: 15px; }
+      
+      /* 條碼區塊 (加上白色背景讓掃描槍好掃描) */
+      .barcode-container { background: white; padding: 10px; border-radius: 10px; display: inline-block; margin-top: 10px; }
+      #barcode { width: 100%; max-width: 250px; height: auto; }
       
       /* 消費紀錄設計 */
       .history-container { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -28,6 +31,8 @@
       #content { display: none; }
       .error-msg { color: #ff3333; }
     </style>
+    <!-- 引入 JsBarcode 條碼套件 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
   </head>
   <body>
     <div id="loading">📡 正在從資料庫讀取會員卡...</div>
@@ -38,6 +43,11 @@
         <div class="card-title">💳 雄商合作社 - 數位儲值卡</div>
         <div class="balance">$<span id="balanceDisplay">0</span></div>
         <div class="student-info"><span id="classDisplay"></span> | <span id="idDisplay"></span> | <span id="nameDisplay"></span></div>
+        
+        <!-- 一維條碼顯示區 -->
+        <div class="barcode-container">
+          <svg id="barcode"></svg>
+        </div>
       </div>
       
       <!-- 歷史紀錄 -->
@@ -87,6 +97,16 @@
             document.getElementById('classDisplay').innerText = data.className;
             document.getElementById('idDisplay').innerText = data.studentId;
             document.getElementById('nameDisplay').innerText = data.name;
+            
+            // 產生一維條碼 (Code128 格式，合作社掃描槍最通用)
+            JsBarcode("#barcode", data.studentId.toString(), {
+              format: "CODE128",
+              lineColor: "#000",
+              width: 2,
+              height: 50,
+              displayValue: true, // 顯示條碼下方的數字
+              fontSize: 16
+            });
             
             // 渲染消費紀錄
             const historyList = document.getElementById('historyList');
