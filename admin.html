@@ -83,6 +83,8 @@
     .report-card h3 { margin-top: 0; color: #6B4FA2; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
     .export-btn { background: #1677ff; color: white; padding: 12px 25px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
     .export-btn:hover { background: #0958d9; }
+    .template-btn { background: #52c41a; color: white; padding: 6px 15px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+    .template-btn:hover { background: #389e0d; }
     .import-textarea { width: 100%; height: 150px; font-family: monospace; padding: 15px; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 15px; box-sizing: border-box; resize: vertical; }
     .hint-box { background: #fffbe6; border: 1px solid #ffe58f; padding: 15px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; color: #d46b08; }
   </style>
@@ -193,17 +195,14 @@
           </div>
         </div>
 
-        <!-- 🌟 模組 5: 報表與批次匯入 -->
         <div id="tab-reports" class="tab-content">
           
-          <!-- 匯出報表區塊 -->
           <div class="report-card">
             <h3>📊 匯出訂單總表</h3>
             <p style="color: #666; font-size: 14px; margin-bottom: 20px;">將系統內的所有訂單紀錄下載為 Excel 可讀取的 CSV 檔案格式，方便您進行結帳與對帳作業。</p>
             <button class="export-btn" id="btn-export-csv" onclick="exportOrdersCSV()">📥 點此下載訂單報表 (.csv)</button>
           </div>
 
-          <!-- 批次匯入區塊 -->
           <div class="report-card">
             <h3>📝 批次匯入學生名單</h3>
             <div class="hint-box">
@@ -211,6 +210,9 @@
               請直接從 Excel 複製學生名單，並貼到下方文字框內。系統會自動略過已經存在於資料庫中的學號。<br>
               資料順序必須為：<code>班級</code>、<code>學號</code>、<code>姓名</code>、<code>初始餘額(選填)</code>。<br>
               <em>(例如：101&emsp;150001&emsp;王小明&emsp;500)</em>
+              <br>
+              <!-- 🌟 這裡新增了下載範例檔的按鈕 -->
+              <button class="template-btn" onclick="downloadImportTemplate()">📄 下載 Excel 格式範例檔</button>
             </div>
             <textarea class="import-textarea" id="import-data-text" placeholder="請在此貼上 Excel 的內容..."></textarea>
             <button class="login-btn" id="btn-import-members" style="width: auto; padding: 12px 30px;" onclick="importMembers()">🚀 啟動批次匯入</button>
@@ -282,7 +284,6 @@
       });
     }
 
-    // --- 會員管理 ---
     function searchMember() {
       const studentId = document.getElementById("search-uid-input").value;
       if (!studentId) return;
@@ -308,7 +309,6 @@
       .then(data => { if (data.success) { alert(data.message); searchMember(); } else { alert(data.message); } });
     }
 
-    // --- 菜單管理 ---
     function fetchMenus() {
       const container = document.getElementById("menu-grid-container");
       container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;">資料載入中...</div>';
@@ -385,9 +385,7 @@
       .then(data => { if (data.success) { fetchMenus(); } });
     }
 
-    // 🌟 --- 報表與批次匯入功能 --- 🌟
-    
-    // 1. 匯出 CSV 功能
+    // --- 報表與批次匯入功能 ---
     function exportOrdersCSV() {
       const btn = document.getElementById("btn-export-csv");
       btn.innerText = "⏳ 報表產生中..."; btn.disabled = true;
@@ -396,53 +394,53 @@
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data.length > 0) {
-          // 將二維陣列轉換為 CSV 格式字串
-          let csvContent = "\uFEFF"; // 加上 BOM 避免 Excel 中文亂碼
+          let csvContent = "\uFEFF"; 
           data.data.forEach(function(rowArray) {
              let row = rowArray.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",");
              csvContent += row + "\r\n";
           });
-
-          // 觸發下載
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.setAttribute("href", url);
           link.setAttribute("download", `雄商合作社_訂單報表_${new Date().toLocaleDateString().replace(/\//g, '')}.csv`);
           link.style.visibility = 'hidden';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          alert("目前沒有訂單資料可以匯出！");
-        }
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        } else { alert("目前沒有訂單資料可以匯出！"); }
         btn.innerText = "📥 點此下載訂單報表 (.csv)"; btn.disabled = false;
       })
       .catch(err => { alert("匯出失敗，請檢查網路連線。"); btn.innerText = "📥 點此下載訂單報表 (.csv)"; btn.disabled = false; });
     }
 
-    // 2. 批次匯入功能
+    // 🌟 產生並下載批次匯入的 CSV 範例檔
+    function downloadImportTemplate() {
+      // 建立包含標題與兩筆範例資料的 CSV 內容
+      const csvContent = "\uFEFF班級,學號,姓名,初始餘額(選填)\n101,150001,王小明,500\n102,150002,陳小華,0";
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute("href", url);
+      link.setAttribute("download", "雄商合作社_批次匯入範例檔.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
     function importMembers() {
       const textData = document.getElementById("import-data-text").value.trim();
       if (!textData) { alert("請先貼上資料！"); return; }
-
       const rows = textData.split("\n");
       const membersToImport = [];
 
-      // 解析每一行貼上的文字 (支援 Tab 鍵或逗號分隔)
       rows.forEach(row => {
         let cols = row.split(/\t|,/); 
-        // 過濾掉空白，並去掉頭尾空格
         cols = cols.map(c => c.trim()).filter(c => c !== "");
-        if (cols.length >= 3) {
-          membersToImport.push(cols);
-        }
+        if (cols.length >= 3) { membersToImport.push(cols); }
       });
 
-      if (membersToImport.length === 0) {
-        alert("無法解析資料，請確認格式是否為：班級 學號 姓名"); return;
-      }
-
+      if (membersToImport.length === 0) { alert("無法解析資料，請確認格式是否為：班級 學號 姓名"); return; }
       if (!confirm(`系統偵測到 ${membersToImport.length} 筆資料，準備開始匯入？`)) return;
 
       const btn = document.getElementById("btn-import-members");
@@ -451,10 +449,8 @@
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "importMembers", members: membersToImport }) })
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          alert(data.message);
-          document.getElementById("import-data-text").value = ""; // 清空輸入框
-        } else { alert("匯入失敗，請稍後再試。"); }
+        if (data.success) { alert(data.message); document.getElementById("import-data-text").value = ""; } 
+        else { alert("匯入失敗，請稍後再試。"); }
         btn.innerText = "🚀 啟動批次匯入"; btn.disabled = false;
       })
       .catch(err => { alert("匯入時發生連線錯誤！"); btn.innerText = "🚀 啟動批次匯入"; btn.disabled = false; });
