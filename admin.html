@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雄商合作社 | 後台管理系統</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+    
+    /* 登入畫面設計 */
+    #login-section { display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 350px; text-align: center; }
+    .login-box h2 { color: #6B4FA2; margin-top: 0; margin-bottom: 24px; }
+    .input-group { margin-bottom: 15px; text-align: left; }
+    .input-group label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; }
+    .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+    .login-btn { width: 100%; padding: 12px; background-color: #6B4FA2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .login-btn:hover { background-color: #553e81; }
+    .error-msg { color: #ff4d4f; font-size: 14px; margin-top: 10px; display: none; }
+
+    /* 後台主畫面設計 (初始隱藏) */
+    #dashboard-section { display: none; padding: 20px; }
+    .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .header h2 { margin: 0; color: #333; font-size: 20px; border-left: 4px solid #6B4FA2; padding-left: 10px; }
+    .logout-btn { padding: 8px 15px; background: #ff4d4f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    
+    .module-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .module-card { background: white; padding: 30px 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); color: #666; }
+  </style>
+</head>
+<body>
+
+  <!-- 登入區塊 -->
+  <div id="login-section">
+    <div class="login-box">
+      <h2>🔐 系統登入</h2>
+      <div class="input-group">
+        <label>管理員帳號</label>
+        <input type="text" id="username" placeholder="請輸入帳號">
+      </div>
+      <div class="input-group">
+        <label>管理員密碼</label>
+        <input type="password" id="password" placeholder="請輸入密碼">
+      </div>
+      <button class="login-btn" onclick="attemptLogin()">登入系統</button>
+      <div id="login-error" class="error-msg">帳號或密碼錯誤</div>
+    </div>
+  </div>
+
+  <!-- 後台主畫面區塊 (登入後才會顯示) -->
+  <div id="dashboard-section">
+    <div class="header">
+      <h2>雄商合作社 | 營運管理後台</h2>
+      <button class="logout-btn" onclick="logout()">登出</button>
+    </div>
+    
+    <div class="module-container">
+      <div class="module-card">📊 營運總覽看板 (開發中)</div>
+      <div class="module-card">📝 訂單管理模組 (開發中)</div>
+      <div class="module-card">💰 會員與儲值管理 (開發中)</div>
+      <div class="module-card">🍔 餐點與菜單管理 (開發中)</div>
+      <div class="module-card">📈 報表與批次匯入 (開發中)</div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ 確保此為您的最新 GAS Exec 網址
+    const gasUrl = "https://script.google.com/macros/s/AKfycbzTstvDqugK3Ha0r_qW_Jwezg2ntLsNwkLaXHVDliiZnVE6EyED0X-6YS38FJnUXzSkKQ/exec";
+
+    // 網頁載入時，檢查是否已經登入過
+    window.onload = function() {
+      if (localStorage.getItem("admin_token") === "admin_verified_token") {
+        showDashboard();
+      }
+    };
+
+    function attemptLogin() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const btn = document.querySelector(".login-btn");
+      const errorMsg = document.getElementById("login-error");
+      
+      if(!user || !pass) return;
+
+      btn.innerText = "登入驗證中...";
+      btn.disabled = true;
+      errorMsg.style.display = "none";
+
+      fetch(gasUrl, {
+        method: "POST",
+        body: JSON.stringify({ action: "adminLogin", username: user, password: pass })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // 登入成功，將 Token 存入瀏覽器，下次就不用重登
+          localStorage.setItem("admin_token", data.token);
+          showDashboard();
+        } else {
+          errorMsg.style.display = "block";
+          btn.innerText = "登入系統";
+          btn.disabled = false;
+        }
+      })
+      .catch(err => {
+        alert("連線失敗，請稍後再試");
+        btn.innerText = "登入系統";
+        btn.disabled = false;
+      });
+    }
+
+    function showDashboard() {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("dashboard-section").style.display = "block";
+    }
+
+    function logout() {
+      localStorage.removeItem("admin_token");
+      location.reload(); // 重新整理網頁，回到登入畫面
+    }
+  </script>
+</body>
+</html>
