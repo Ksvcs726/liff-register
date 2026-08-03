@@ -11,51 +11,31 @@
     #login-section { display: flex; justify-content: center; align-items: center; height: 100vh; }
     .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 380px; text-align: center; }
     .login-box h2 { color: #6B4FA2; margin-top: 0; margin-bottom: 24px; font-size: 22px; }
-    
     .input-group { margin-bottom: 18px; text-align: left; }
     .input-group label { display: block; font-size: 14px; color: #666; margin-bottom: 6px; font-weight: bold; }
-    .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
-    .input-group input:focus { border-color: #6B4FA2; outline: none; box-shadow: 0 0 0 2px rgba(107, 79, 162, 0.2); }
+    .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
     
-    /* 驗證碼專用區塊 */
     .captcha-container { display: flex; gap: 10px; align-items: center; }
     .captcha-container input { flex: 1; }
-    #captcha-display { 
-      background: linear-gradient(45deg, #e0e0e0, #f5f5f5); 
-      color: #333; 
-      padding: 10px 15px; 
-      border-radius: 6px; 
-      font-size: 20px; 
-      font-weight: bold; 
-      letter-spacing: 4px; 
-      cursor: pointer; 
-      user-select: none;
-      border: 1px dashed #999;
-      min-width: 70px;
-      text-align: center;
-    }
+    #captcha-display { background: linear-gradient(45deg, #e0e0e0, #f5f5f5); color: #333; padding: 10px 15px; border-radius: 6px; font-size: 20px; font-weight: bold; letter-spacing: 4px; cursor: pointer; user-select: none; border: 1px dashed #999; min-width: 70px; text-align: center; }
     .captcha-hint { font-size: 12px; color: #888; margin-top: 5px; }
 
-    .login-btn { width: 100%; padding: 14px; background-color: #6B4FA2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-    .login-btn:hover { background-color: #553e81; }
+    .login-btn { width: 100%; padding: 14px; background-color: #6B4FA2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     .error-msg { color: #ff4d4f; font-size: 14px; margin-top: 12px; display: none; font-weight: bold; }
 
-    /* ================= 後台主畫面設計 (側邊欄佈局) ================= */
+    /* ================= 後台主畫面設計 ================= */
     #dashboard-section { display: none; height: 100vh; overflow: hidden; }
     
-    /* 左側選單 (Sidebar) */
+    /* 左側選單 */
     .sidebar { width: 260px; background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; z-index: 10; }
     .sidebar-header { padding: 25px 20px; text-align: center; border-bottom: 1px solid #f0f2f5; }
     .sidebar-header h3 { margin: 0; color: #6B4FA2; font-size: 20px; }
-    
     .module-menu { flex: 1; padding: 20px 0; overflow-y: auto; }
-    .menu-item { padding: 16px 25px; color: #555; font-size: 16px; font-weight: 500; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; display: flex; align-items: center; gap: 10px; }
+    .menu-item { padding: 16px 25px; color: #555; font-size: 16px; font-weight: 500; cursor: pointer; border-left: 4px solid transparent; display: flex; align-items: center; gap: 10px; }
     .menu-item:hover { background-color: #f8f9fa; color: #6B4FA2; }
     .menu-item.active { background-color: #f0ebf8; color: #6B4FA2; border-left-color: #6B4FA2; font-weight: bold; }
-    
     .sidebar-footer { padding: 20px; border-top: 1px solid #f0f2f5; }
-    .logout-btn { width: 100%; padding: 12px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; }
-    .logout-btn:hover { background: #d9363e; }
+    .logout-btn { width: 100%; padding: 12px; background: #ff4d4f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 15px; }
 
     /* 右側主內容區 */
     .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f0f2f5; }
@@ -63,7 +43,29 @@
     .top-header h2 { margin: 0; color: #333; font-size: 22px; }
     
     .content-area { padding: 30px; overflow-y: auto; flex: 1; }
-    .welcome-card { background: white; padding: 40px; border-radius: 12px; text-align: center; color: #666; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+    
+    /* 分頁內容隱藏與顯示 */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* --- 模組 1: 營運總覽 --- */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); display: flex; flex-direction: column; }
+    .stat-title { color: #888; font-size: 15px; margin-bottom: 10px; font-weight: bold; }
+    .stat-value { color: #6B4FA2; font-size: 32px; font-weight: bold; }
+    .stat-value.money { color: #ff8c00; }
+
+    /* --- 模組 2: 訂單管理 --- */
+    .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background-color: #f8f9fa; padding: 15px 20px; color: #555; font-weight: bold; border-bottom: 2px solid #eee; }
+    td { padding: 15px 20px; border-bottom: 1px solid #eee; color: #333; }
+    .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+    .status-pending { background-color: #fff2e8; color: #fa8c16; }
+    .status-done { background-color: #f6ffed; color: #52c41a; }
+    
+    /* 開發中佔位圖 */
+    .dev-placeholder { background: white; padding: 40px; border-radius: 12px; text-align: center; color: #999; margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -72,17 +74,8 @@
   <div id="login-section">
     <div class="login-box">
       <h2>🔐 合作社點餐後台管理系統</h2>
-      
-      <div class="input-group">
-        <label>管理員帳號</label>
-        <input type="text" id="username" placeholder="請輸入帳號">
-      </div>
-      
-      <div class="input-group">
-        <label>管理員密碼</label>
-        <input type="password" id="password" placeholder="請輸入密碼">
-      </div>
-
+      <div class="input-group"><label>管理員帳號</label><input type="text" id="username" placeholder="請輸入帳號"></div>
+      <div class="input-group"><label>管理員密碼</label><input type="password" id="password" placeholder="請輸入密碼"></div>
       <div class="input-group">
         <label>驗證碼</label>
         <div class="captcha-container">
@@ -91,70 +84,98 @@
         </div>
         <div class="captcha-hint">※ 點擊數字可重新產生驗證碼</div>
       </div>
-
       <button class="login-btn" onclick="attemptLogin()">登入系統</button>
       <div id="login-error" class="error-msg">帳號或密碼錯誤</div>
     </div>
   </div>
 
-  <!-- ================= 後台主畫面區塊 (側邊欄佈局) ================= -->
+  <!-- ================= 後台主畫面區塊 ================= -->
   <div id="dashboard-section">
     
     <!-- 左側選單 -->
     <div class="sidebar">
-      <div class="sidebar-header">
-        <h3>雄商合作社</h3>
-      </div>
+      <div class="sidebar-header"><h3>雄商合作社</h3></div>
       <div class="module-menu">
-        <div class="menu-item active" onclick="switchTab(this, '營運總覽看板')">📊 營運總覽看板</div>
-        <div class="menu-item" onclick="switchTab(this, '訂單管理模組')">📝 訂單管理模組</div>
-        <div class="menu-item" onclick="switchTab(this, '會員與儲值管理')">💰 會員與儲值管理</div>
-        <div class="menu-item" onclick="switchTab(this, '餐點與菜單管理')">🍔 餐點與菜單管理</div>
-        <div class="menu-item" onclick="switchTab(this, '報表與批次匯入')">📈 報表與批次匯入</div>
+        <div class="menu-item active" onclick="switchTab(this, '營運總覽看板', 'tab-dashboard')">📊 營運總覽看板</div>
+        <div class="menu-item" onclick="switchTab(this, '訂單管理模組', 'tab-orders')">📝 訂單管理模組</div>
+        <div class="menu-item" onclick="switchTab(this, '會員與儲值管理', 'tab-members')">💰 會員與儲值管理</div>
+        <div class="menu-item" onclick="switchTab(this, '餐點與菜單管理', 'tab-menus')">🍔 餐點與菜單管理</div>
+        <div class="menu-item" onclick="switchTab(this, '報表與批次匯入', 'tab-reports')">📈 報表與批次匯入</div>
       </div>
-      <div class="sidebar-footer">
-        <button class="logout-btn" onclick="logout()">登出系統</button>
-      </div>
+      <div class="sidebar-footer"><button class="logout-btn" onclick="logout()">登出系統</button></div>
     </div>
 
     <!-- 右側主要內容 -->
     <div class="main-content">
-      <div class="top-header">
-        <h2 id="current-page-title">營運總覽看板</h2>
-      </div>
+      <div class="top-header"><h2 id="current-page-title">營運總覽看板</h2></div>
+      
       <div class="content-area">
-        <div class="welcome-card">
-          <h3 style="color:#6B4FA2;">歡迎進入管理後台</h3>
-          <p>此模組正在積極開發中，敬請期待！</p>
+        
+        <!-- 模組 1: 營運總覽看板 -->
+        <div id="tab-dashboard" class="tab-content active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-title">今日總訂單數</span>
+              <span class="stat-value" id="dash-order-count">--</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-title">今日預估營業額</span>
+              <span class="stat-value money" id="dash-revenue">$ --</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-title">待處理訂單</span>
+              <span class="stat-value" style="color: #fa8c16;" id="dash-pending">--</span>
+            </div>
+          </div>
+          <p style="color: #666; font-size: 14px;">※ 數據由 Google Sheet 資料庫即時連線更新</p>
         </div>
+
+        <!-- 模組 2: 訂單管理模組 -->
+        <div id="tab-orders" class="tab-content">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>時間</th>
+                  <th>班級 / 學號 / 姓名</th>
+                  <th>訂購品項</th>
+                  <th>總金額</th>
+                  <th>狀態</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="order-list-body">
+                <!-- 這裡的內容會由 JavaScript 自動填入 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 其他模組佔位 -->
+        <div id="tab-members" class="tab-content"><div class="dev-placeholder">💰 會員查詢與儲值功能開發中...</div></div>
+        <div id="tab-menus" class="tab-content"><div class="dev-placeholder">🍔 菜單上下架功能開發中...</div></div>
+        <div id="tab-reports" class="tab-content"><div class="dev-placeholder">📈 報表匯出與匯入功能開發中...</div></div>
+
       </div>
     </div>
-
   </div>
 
   <script>
-    // ⚠️ 確保此為您的最新 GAS Exec 網址
     const gasUrl = "https://script.google.com/macros/s/AKfycbzTstvDqugK3Ha0r_qW_Jwezg2ntLsNwkLaXHVDliiZnVE6EyED0X-6YS38FJnUXzSkKQ/exec";
-    
     let currentCaptcha = "";
 
     window.onload = function() {
-      // 初始化產生驗證碼
       generateCaptcha();
-      
-      // 檢查登入狀態
       if (localStorage.getItem("admin_token") === "admin_verified_token") {
         showDashboard();
       }
     };
 
-    // 產生 4 位數隨機驗證碼
     function generateCaptcha() {
       currentCaptcha = Math.floor(1000 + Math.random() * 9000).toString();
       document.getElementById("captcha-display").innerText = currentCaptcha;
     }
 
-    // 顯示錯誤訊息
     function showError(msg) {
       const errorDiv = document.getElementById("login-error");
       errorDiv.innerText = msg;
@@ -167,23 +188,13 @@
       const captchaInput = document.getElementById("captcha-input").value;
       const btn = document.querySelector(".login-btn");
       
-      // 1. 檢查欄位是否空白
-      if(!user || !pass || !captchaInput) {
-        showError("請填寫完整的帳號、密碼與驗證碼");
-        return;
-      }
-
-      // 2. 檢查前端驗證碼是否正確
+      if(!user || !pass || !captchaInput) { showError("請填寫完整的帳號、密碼與驗證碼"); return; }
       if(captchaInput !== currentCaptcha) {
         showError("驗證碼輸入錯誤，請重新輸入");
-        generateCaptcha(); // 刷新驗證碼
-        document.getElementById("captcha-input").value = ""; // 清空輸入框
-        return;
+        generateCaptcha(); document.getElementById("captcha-input").value = ""; return;
       }
 
-      // 3. 送出後端驗證
-      btn.innerText = "登入驗證中...";
-      btn.disabled = true;
+      btn.innerText = "登入驗證中..."; btn.disabled = true;
       document.getElementById("login-error").style.display = "none";
 
       fetch(gasUrl, {
@@ -197,17 +208,13 @@
           showDashboard();
         } else {
           showError("帳號或密碼錯誤");
-          generateCaptcha(); // 登入失敗也刷新驗證碼，增加安全性
-          document.getElementById("captcha-input").value = "";
-          document.getElementById("password").value = "";
-          btn.innerText = "登入系統";
-          btn.disabled = false;
+          generateCaptcha(); document.getElementById("captcha-input").value = ""; document.getElementById("password").value = "";
+          btn.innerText = "登入系統"; btn.disabled = false;
         }
       })
       .catch(err => {
         showError("網路連線失敗，請稍後再試");
-        btn.innerText = "登入系統";
-        btn.disabled = false;
+        btn.innerText = "登入系統"; btn.disabled = false;
       });
     }
 
@@ -219,7 +226,6 @@
       fetchDashboardData();
     }
 
-    // 🌟 新增：向 GAS 抓取今日資料並更新畫面
     function fetchDashboardData() {
       fetch(gasUrl, {
         method: "POST",
@@ -235,10 +241,10 @@
           
           // 更新訂單列表
           const tbody = document.getElementById("order-list-body");
-          tbody.innerHTML = ""; // 清空假資料
+          tbody.innerHTML = ""; 
           
           if (data.orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">今日目前尚無訂單</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">今日目前尚無訂單</td></tr>';
             return;
           }
 
@@ -257,7 +263,7 @@
                 <td>${order.item}</td>
                 <td style="color:#ff4d4f; font-weight:bold;">$${order.price}</td>
                 <td>${statusHtml}</td>
-                <td><button style="padding: 5px 12px; background:#6B4FA2; color:white; border:none; border-radius:4px; cursor:pointer;">切換狀態</button></td>
+                <td><button style="padding: 6px 14px; background:#6B4FA2; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">完成</button></td>
               </tr>
             `;
           });
@@ -271,17 +277,16 @@
       location.reload(); 
     }
 
-    // 切換左側選單的視覺效果與標題
-    function switchTab(element, titleName) {
-      // 移除所有選單的 active 狀態
+    function switchTab(element, titleName, targetId) {
       const items = document.querySelectorAll('.menu-item');
       items.forEach(item => item.classList.remove('active'));
-      
-      // 為點擊的選單加上 active 狀態
       element.classList.add('active');
       
-      // 更改右側上方標題
       document.getElementById("current-page-title").innerText = titleName;
+
+      const tabs = document.querySelectorAll('.tab-content');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      document.getElementById(targetId).classList.add('active');
     }
   </script>
 </body>
