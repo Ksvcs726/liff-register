@@ -470,11 +470,13 @@
       document.getElementById("new-menu-img").value = ""; 
       document.getElementById("new-menu-color").value = "#1DB446";
       
-      document.getElementById("btn-submit-menu").innerText = "🚀 確認上架餐點"; 
-      document.getElementById("btn-submit-menu").style.backgroundColor = "#6B4FA2";
+      const btn = document.getElementById("btn-submit-menu");
+      btn.innerText = "🚀 確認上架餐點"; 
+      btn.style.backgroundColor = "#6B4FA2";
+      btn.disabled = false; // 🌟 修復關鍵：成功儲存或取消後，把按鈕重新「解鎖」恢復成可點擊狀態！
+      
       document.getElementById("btn-cancel-edit").style.display = "none";
     }
-
     function submitMenu() {
       const btn = document.getElementById("btn-submit-menu");
       
