@@ -7,41 +7,47 @@
   
   <!-- 引入 LINE 官方的 LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 🌟 補回條碼產生器套件 JsBarcode -->
+  <!-- 引入條碼產生器套件 JsBarcode -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     
     /* 載入中畫面 */
     #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
-    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #6B4FA2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5d408f; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* 會員卡主體設計 */
-    .card-container { background: linear-gradient(135deg, #6B4FA2 0%, #4a3670 100%); width: 100%; max-width: 350px; border-radius: 16px; padding: 25px; color: white; box-shadow: 0 10px 20px rgba(107, 79, 162, 0.3); margin-bottom: 20px; box-sizing: border-box; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; margin-bottom: 15px; }
-    .card-header h2 { margin: 0; font-size: 18px; font-weight: normal; letter-spacing: 1px; }
+    /* 會員卡主體設計 (對齊圖一) */
+    .card-container { background: linear-gradient(135deg, #5d408f 0%, #462c73 100%); width: 100%; max-width: 350px; border-radius: 16px; padding: 25px; color: white; box-shadow: 0 10px 20px rgba(93, 64, 143, 0.2); margin-bottom: 20px; box-sizing: border-box; }
+    
+    .card-header { margin-bottom: 20px; font-size: 13px; opacity: 0.85; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
     
     .student-info { margin-bottom: 25px; }
-    .student-class { font-size: 14px; opacity: 0.8; margin-bottom: 5px; }
-    .student-name { font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+    .student-name { font-size: 28px; font-weight: bold; letter-spacing: 2px; margin-bottom: 8px; }
+    .student-class-id { font-size: 14px; opacity: 0.8; letter-spacing: 0.5px; }
     
-    .balance-section { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; }
-    .balance-title { font-size: 14px; opacity: 0.8; margin-bottom: 5px; }
-    .balance-amount { font-size: 32px; font-weight: bold; color: #ffd700; }
+    /* 左右對齊的深色餘額區塊 */
+    .balance-section { background: rgba(0, 0, 0, 0.25); padding: 15px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .balance-title { font-size: 14px; opacity: 0.9; }
+    .balance-amount { font-size: 24px; font-weight: bold; color: #ffdf00; letter-spacing: 1px; }
 
-    /* 🌟 新增條碼顯示區塊的樣式 */
-    .barcode-section { background: white; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; }
+    /* 條碼區塊 (加上提示文字) */
+    .barcode-section { background: white; padding: 18px 15px 15px 15px; border-radius: 12px; text-align: center; }
+    .barcode-hint { color: #555; font-size: 11px; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px; }
 
     /* 消費歷史紀錄區塊 */
-    .history-container { width: 100%; max-width: 350px; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
-    .history-title { color: #333; font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+    .history-container { width: 100%; max-width: 350px; background: white; border-radius: 16px; padding: 20px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); box-sizing: border-box; }
+    
+    /* 藍色光棒標題 */
+    .history-title { color: #333; font-size: 15px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #f0f2f5; padding-bottom: 12px; display: flex; align-items: center; }
+    .history-title::before { content: ""; display: inline-block; width: 4px; height: 15px; background-color: #1890ff; margin-right: 10px; border-radius: 2px; }
+    
     .history-list { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow-y: auto; }
-    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f9f9f9; }
+    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f9f9f9; }
     .history-item:last-child { border-bottom: none; }
-    .item-left { display: flex; flex-direction: column; }
-    .item-name { color: #333; font-weight: bold; font-size: 15px; margin-bottom: 4px; }
+    .item-left { display: flex; flex-direction: column; gap: 4px; }
+    .item-name { color: #333; font-weight: bold; font-size: 15px; }
     .item-time { color: #999; font-size: 12px; }
     .item-price { color: #ff4d4f; font-weight: bold; font-size: 16px; }
     .empty-state { text-align: center; color: #999; padding: 20px 0; font-size: 14px; }
@@ -52,34 +58,32 @@
   <!-- 載入中動畫 -->
   <div id="loading-screen">
     <div class="spinner"></div>
-    <div style="color: #6B4FA2; font-weight: bold;">會員資料讀取中...</div>
+    <div style="color: #5d408f; font-weight: bold;">會員資料讀取中...</div>
   </div>
 
-  <!-- 會員卡介面 -->
+  <!-- 🌟 會員卡介面 (圖一排版) -->
   <div class="card-container" id="main-card" style="display: none;">
-    <div class="card-header">
-      <h2>雄商合作社</h2>
-      <div style="font-size: 12px; opacity: 0.8;">數位會員卡</div>
-    </div>
+    <div class="card-header">💳 雄商合作社 - 數位儲值卡</div>
+    
     <div class="student-info">
-      <div class="student-class" id="ui-class">--</div>
       <div class="student-name" id="ui-name">--</div>
-      <div style="font-size: 14px; opacity: 0.8; margin-top: 5px;" id="ui-id">學號: --</div>
+      <div class="student-class-id" id="ui-class-id">-- 班 | 學號：--</div>
     </div>
+    
     <div class="balance-section">
-      <div class="balance-title">目前餘額</div>
+      <div class="balance-title">儲值卡餘額</div>
       <div class="balance-amount" id="ui-balance">$ 0</div>
     </div>
     
-    <!-- 🌟 條碼區塊 -->
     <div class="barcode-section">
-      <svg id="barcode" style="width: 100%; max-height: 70px;"></svg>
+      <div class="barcode-hint">出示條碼供合作社掃描</div>
+      <svg id="barcode" style="width: 100%; max-height: 65px;"></svg>
     </div>
   </div>
 
   <!-- 消費紀錄 -->
   <div class="history-container" id="history-section" style="display: none;">
-    <div class="history-title">📅 近期消費紀錄</div>
+    <div class="history-title">歷史消費紀錄</div>
     <ul class="history-list" id="ui-history-list">
       <!-- 紀錄會由 JS 動態塞入 -->
     </ul>
@@ -89,7 +93,7 @@
     // 您的 GAS API 網址
     const gasUrl = "https://script.google.com/macros/s/AKfycbzTstvDqugK3Ha0r_qW_Jwezg2ntLsNwkLaXHVDliiZnVE6EyED0X-6YS38FJnUXzSkKQ/exec";
     
-    // 您的 LIFF ID
+    // ⚠️ 請填入您的 LIFF ID
     const myLiffId = "2010945191-8UoHPjVp"; 
 
     // 初始化 LIFF
@@ -97,17 +101,14 @@
       try {
         await liff.init({ liffId: myLiffId });
         
-        // 如果使用者還沒登入 LINE (在外部瀏覽器打開的話)，強制要求登入
         if (!liff.isLoggedIn()) {
           liff.login();
           return;
         }
 
-        // 成功取得 LINE 身分
         const profile = await liff.getProfile();
         const uid = profile.userId;
         
-        // 拿 UID 去向 GAS 要資料
         fetchMemberData(uid);
 
       } catch (err) {
@@ -125,20 +126,19 @@
       .then(res => res.json())
       .then(data => {
         if (data.found) {
-          // 把資料塞進畫面
-          document.getElementById("ui-class").innerText = data.className;
+          // 塞入姓名與班級學號 (圖一排版)
           document.getElementById("ui-name").innerText = data.name;
-          document.getElementById("ui-id").innerText = "學號: " + data.studentId;
+          document.getElementById("ui-class-id").innerText = data.className + " 班 | 學號：" + data.studentId;
           document.getElementById("ui-balance").innerText = "$ " + data.balance;
           
-          // 🌟 產生學號條碼
+          // 產生學號條碼
           JsBarcode("#barcode", data.studentId.toString(), {
-            format: "CODE128",     // 條碼格式
-            displayValue: true,    // 顯示下方的數字
-            fontSize: 16,          // 數字大小
-            width: 2,              // 條碼寬度
-            height: 50,            // 條碼高度
-            margin: 0              // 邊界
+            format: "CODE128",     
+            displayValue: true,    
+            fontSize: 16,          
+            width: 2,              
+            height: 50,            
+            margin: 0              
           });
           
           // 渲染歷史紀錄
@@ -160,7 +160,6 @@
             historyList.innerHTML = '<div class="empty-state">尚無消費紀錄</div>';
           }
 
-          // 隱藏載入中，顯示會員卡
           document.getElementById("loading-screen").style.display = "none";
           document.getElementById("main-card").style.display = "block";
           document.getElementById("history-section").style.display = "block";
