@@ -4,8 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>雄商合作社 | 數位會員卡</title>
+  
   <!-- 引入 LINE 官方的 LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 🌟 補回條碼產生器套件 JsBarcode -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     
@@ -27,6 +31,9 @@
     .balance-title { font-size: 14px; opacity: 0.8; margin-bottom: 5px; }
     .balance-amount { font-size: 32px; font-weight: bold; color: #ffd700; }
 
+    /* 🌟 新增條碼顯示區塊的樣式 */
+    .barcode-section { background: white; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; }
+
     /* 消費歷史紀錄區塊 */
     .history-container { width: 100%; max-width: 350px; background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
     .history-title { color: #333; font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
@@ -37,7 +44,6 @@
     .item-name { color: #333; font-weight: bold; font-size: 15px; margin-bottom: 4px; }
     .item-time { color: #999; font-size: 12px; }
     .item-price { color: #ff4d4f; font-weight: bold; font-size: 16px; }
-    
     .empty-state { text-align: center; color: #999; padding: 20px 0; font-size: 14px; }
   </style>
 </head>
@@ -64,6 +70,11 @@
       <div class="balance-title">目前餘額</div>
       <div class="balance-amount" id="ui-balance">$ 0</div>
     </div>
+    
+    <!-- 🌟 條碼區塊 -->
+    <div class="barcode-section">
+      <svg id="barcode" style="width: 100%; max-height: 70px;"></svg>
+    </div>
   </div>
 
   <!-- 消費紀錄 -->
@@ -75,10 +86,10 @@
   </div>
 
   <script>
-    // ⚠️ 1. 請填入您的 GAS API 網址
+    // 您的 GAS API 網址
     const gasUrl = "https://script.google.com/macros/s/AKfycbzTstvDqugK3Ha0r_qW_Jwezg2ntLsNwkLaXHVDliiZnVE6EyED0X-6YS38FJnUXzSkKQ/exec";
     
-    // ⚠️ 2. 請填入您剛剛申請的 LIFF ID (例如 "2010935415-xxxxxx")
+    // 您的 LIFF ID
     const myLiffId = "2010945191-8UoHPjVp"; 
 
     // 初始化 LIFF
@@ -119,6 +130,16 @@
           document.getElementById("ui-name").innerText = data.name;
           document.getElementById("ui-id").innerText = "學號: " + data.studentId;
           document.getElementById("ui-balance").innerText = "$ " + data.balance;
+          
+          // 🌟 產生學號條碼
+          JsBarcode("#barcode", data.studentId.toString(), {
+            format: "CODE128",     // 條碼格式
+            displayValue: true,    // 顯示下方的數字
+            fontSize: 16,          // 數字大小
+            width: 2,              // 條碼寬度
+            height: 50,            // 條碼高度
+            margin: 0              // 邊界
+          });
           
           // 渲染歷史紀錄
           const historyList = document.getElementById("ui-history-list");
