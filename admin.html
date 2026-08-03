@@ -213,8 +213,57 @@
 
     function showDashboard() {
       document.getElementById("login-section").style.display = "none";
-      // 改用 flex 佈局來顯示側邊欄
       document.getElementById("dashboard-section").style.display = "flex"; 
+      
+      // 登入成功後，立刻抓取今日營運數據
+      fetchDashboardData();
+    }
+
+    // 🌟 新增：向 GAS 抓取今日資料並更新畫面
+    function fetchDashboardData() {
+      fetch(gasUrl, {
+        method: "POST",
+        body: JSON.stringify({ action: "getAdminDashboardData" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // 更新營運總覽數字
+          document.getElementById("dash-order-count").innerText = data.totalCount + " 筆";
+          document.getElementById("dash-revenue").innerText = "$ " + data.totalRevenue;
+          document.getElementById("dash-pending").innerText = data.pendingCount + " 筆";
+          
+          // 更新訂單列表
+          const tbody = document.getElementById("order-list-body");
+          tbody.innerHTML = ""; // 清空假資料
+          
+          if (data.orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">今日目前尚無訂單</td></tr>';
+            return;
+          }
+
+          data.orders.forEach(order => {
+            let statusHtml = '';
+            if (order.status === '準備中') {
+              statusHtml = `<span class="status-badge status-pending">${order.status}</span>`;
+            } else {
+              statusHtml = `<span class="status-badge status-done">${order.status}</span>`;
+            }
+
+            tbody.innerHTML += `
+              <tr>
+                <td>${order.time}</td>
+                <td>${order.classInfo}</td>
+                <td>${order.item}</td>
+                <td style="color:#ff4d4f; font-weight:bold;">$${order.price}</td>
+                <td>${statusHtml}</td>
+                <td><button style="padding: 5px 12px; background:#6B4FA2; color:white; border:none; border-radius:4px; cursor:pointer;">切換狀態</button></td>
+              </tr>
+            `;
+          });
+        }
+      })
+      .catch(err => console.error("抓取資料失敗", err));
     }
 
     function logout() {
