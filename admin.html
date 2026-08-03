@@ -220,9 +220,22 @@
         <div id="tab-reports" class="tab-content">
           
           <div class="report-card">
-            <h3>📊 匯出訂單總表</h3>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">將系統內的所有訂單紀錄下載為 Excel 可讀取的 CSV 檔案格式，方便您進行結帳與對帳作業。</p>
-            <button class="export-btn" id="btn-export-csv" onclick="exportOrdersCSV()">📥 點此下載訂單報表 (.csv)</button>
+            <h3>📊 自訂區間匯出訂單</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">選擇您要結帳的日期區間，系統會自動跨越目前與歷史封存庫，彙整出一份完整的 CSV 報表。</p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; max-width: 500px;">
+              <div class="input-group" style="margin-bottom: 0; flex: 1;">
+                <label>起始日期</label>
+                <input type="date" id="export-start-date">
+              </div>
+              <span style="color: #999; font-weight: bold; margin-top: 25px;">～</span>
+              <div class="input-group" style="margin-bottom: 0; flex: 1;">
+                <label>結束日期</label>
+                <input type="date" id="export-end-date">
+              </div>
+            </div>
+            
+            <button class="export-btn" id="btn-export-csv" onclick="exportOrdersCSV()">📥 點此下載自訂區間報表 (.csv)</button>
           </div>
 
           <div class="report-card">
@@ -468,13 +481,26 @@
 
     // --- 報表與批次匯入功能 ---
     function exportOrdersCSV() {
+      const startDate = document.getElementById("export-start-date").value;
+      const endDate = document.getElementById("export-end-date").value;
       const btn = document.getElementById("btn-export-csv");
-      btn.innerText = "⏳ 報表產生中..."; btn.disabled = true;
 
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders" }) })
+      if (!startDate || !endDate) {
+        alert("請先選擇起始與結束日期！");
+        return;
+      }
+      if (startDate > endDate) {
+        alert("起始日期不能晚於結束日期喔！");
+        return;
+      }
+
+      btn.innerText = "⏳ 報表跨庫搜尋與產生中..."; btn.disabled = true;
+
+      // 將選定的日期一起送給後端尋找
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders", startDate: startDate, endDate: endDate }) })
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.data.length > 0) {
+        if (data.success && data.data.length > 1) { // 陣列長度大於 1 代表有實際資料 (扣除標題列)
           let csvContent = "\uFEFF"; 
           data.data.forEach(function(rowArray) {
              let row = rowArray.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",");
@@ -484,13 +510,15 @@
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.setAttribute("href", url);
-          link.setAttribute("download", `雄商合作社_訂單報表_${new Date().toLocaleDateString().replace(/\//g, '')}.csv`);
+          link.setAttribute("download", `雄商合作社_區間報表_${startDate}_至_${endDate}.csv`);
           link.style.visibility = 'hidden';
           document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        } else { alert("目前沒有訂單資料可以匯出！"); }
-        btn.innerText = "📥 點此下載訂單報表 (.csv)"; btn.disabled = false;
+        } else { 
+          alert("這段期間內，系統找不到任何訂單資料喔！"); 
+        }
+        btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; btn.disabled = false;
       })
-      .catch(err => { alert("匯出失敗，請檢查網路連線。"); btn.innerText = "📥 點此下載訂單報表 (.csv)"; btn.disabled = false; });
+      .catch(err => { alert("匯出失敗，請檢查網路連線。"); btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; btn.disabled = false; });
     }
 
     function downloadImportTemplate() {
