@@ -289,7 +289,8 @@
 
     window.onload = function() {
       generateCaptcha();
-      if (localStorage.getItem("admin_token") === "admin_verified_token") {
+      // 🌟 資安升級：只要有 Token 就嘗試進入，若 Token 無效後端會自動阻擋
+      if (localStorage.getItem("admin_token")) {
         showDashboard();
       }
     };
@@ -311,16 +312,8 @@
       const pass = document.getElementById("password").value;
       const captchaInput = document.getElementById("captcha-input").value;
       
-      if(!user || !pass || !captchaInput) { 
-        showError("請填寫完整的帳號、密碼與驗證碼"); 
-        return; 
-      }
-      if(captchaInput !== currentCaptcha) { 
-        showError("驗證碼輸入錯誤"); 
-        generateCaptcha(); 
-        document.getElementById("captcha-input").value = ""; 
-        return; 
-      }
+      if(!user || !pass || !captchaInput) { showError("請填寫完整的帳號、密碼與驗證碼"); return; }
+      if(captchaInput !== currentCaptcha) { showError("驗證碼輸入錯誤"); generateCaptcha(); document.getElementById("captcha-input").value = ""; return; }
 
       const btn = document.querySelector(".login-btn");
       btn.innerText = "登入驗證中..."; 
@@ -330,7 +323,7 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) { 
-          localStorage.setItem("admin_token", data.token); 
+          localStorage.setItem("admin_token", data.token); // 儲存後端發放的專屬金鑰
           showDashboard(); 
         } else { 
           showError("帳號或密碼錯誤"); 
@@ -365,15 +358,14 @@
 
     // --- 2. 營運總覽與訂單明細 ---
     function fetchDashboardData() {
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAdminDashboardData" }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAdminDashboardData", token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          // 渲染上方數字與表格
           document.getElementById("dash-order-count").innerText = data.totalCount + " 筆";
           document.getElementById("dash-revenue").innerText = "$ " + data.totalRevenue;
-          const tbody = document.getElementById("order-list-body"); 
-          tbody.innerHTML = ""; 
+          const tbody = document.getElementById("order-list-body"); tbody.innerHTML = ""; 
           
           if (data.orders.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding: 30px;">今日目前尚無訂單</td></tr>'; 
@@ -383,7 +375,6 @@
             });
           }
 
-          // 渲染各班級統計卡片
           const statsContainer = document.getElementById("class-stats-container");
           statsContainer.innerHTML = "";
           const classes = Object.keys(data.classStats).sort();
@@ -393,8 +384,7 @@
           } else {
             classes.forEach(cls => {
               const items = data.classStats[cls];
-              let itemsHtml = ""; 
-              let totalForClass = 0;
+              let itemsHtml = ""; let totalForClass = 0;
               for (const [itemName, count] of Object.entries(items)) {
                 itemsHtml += `<div class="class-item-row"><span class="class-item-name">${itemName}</span><span class="class-item-count">${count} 份</span></div>`;
                 totalForClass += count;
@@ -402,7 +392,7 @@
               statsContainer.innerHTML += `<div class="class-card"><div class="class-card-header">${cls} 班</div>${itemsHtml}<div class="class-card-total">本班總計：${totalForClass} 份</div></div>`;
             });
           }
-        }
+        } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
       });
     }
 
@@ -410,8 +400,8 @@
     function searchMember() {
       const studentId = document.getElementById("search-uid-input").value;
       if (!studentId) return;
-      
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "searchStudent", studentId: studentId }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "searchStudent", studentId: studentId, token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.found) {
@@ -419,11 +409,9 @@
           document.getElementById("mem-id").innerText = studentId;
           document.getElementById("mem-balance").innerText = "$ " + data.balance;
           document.getElementById("member-info-card").style.display = "block";
-          document.getElementById("trade-amount").value = ""; 
-          currentActiveStudent = studentId;
-        } else { 
-          alert("查無此學號"); 
-        }
+          document.getElementById("trade-amount").value = ""; currentActiveStudent = studentId;
+        } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
+        else { alert("查無此學號"); }
       });
     }
 
@@ -431,29 +419,19 @@
       const amount = document.getElementById("trade-amount").value;
       if (!amount || amount <= 0) return;
       if (!confirm(`確定要為學號 ${currentActiveStudent} 進行作業，金額 $${amount} 嗎？`)) return;
-      
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "updateBalance", studentId: currentActiveStudent, amount: amount, type: type }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "updateBalance", studentId: currentActiveStudent, amount: amount, type: type, token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
-      .then(data => { 
-        if (data.success) { 
-          alert(data.message); 
-          searchMember(); 
-        } else { 
-          alert(data.message); 
-        } 
-      });
+      .then(data => { if (data.success) { alert(data.message); searchMember(); } else { alert(data.message); if (data.message.includes("⛔")) logout(); } });
     }
 
     function unbindMemberLINE() {
       if (!currentActiveStudent) return;
       if (!confirm(`⚠️ 確定要解除學號 ${currentActiveStudent} 的 LINE 綁定嗎？\n(解除後該生需重新在手機點擊註冊網址才能點餐，但餘額不會消失)`)) return;
-      
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "unbindLINE", studentId: currentActiveStudent }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "unbindLINE", studentId: currentActiveStudent, token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
-      .then(data => { 
-        if (data.success) alert(data.message); 
-        else alert("發生錯誤：" + data.message); 
-      })
+      .then(data => { if (data.success) alert(data.message); else { alert("發生錯誤：" + data.message); if (data.message.includes("⛔")) logout(); } })
       .catch(err => { alert("網路連線失敗"); });
     }
 
@@ -461,32 +439,21 @@
     function fetchMenus() {
       const container = document.getElementById("menu-grid-container");
       container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;">資料載入中...</div>';
-      
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getMenus" }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getMenus", token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           container.innerHTML = "";
-          if (data.menus.length === 0) { 
-            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;">目前沒有餐點</div>'; 
-            return; 
-          }
+          if (data.menus.length === 0) { container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;">目前沒有餐點</div>'; return; }
           
           data.menus.forEach(menu => {
             const fallbackImg = "https://images.unsplash.com/photo-1547573854-74d2a71d0826?q=80&w=600";
-            const safeName = menu.name.replace(/'/g, "\\'"); 
-            const safeDesc = menu.desc.replace(/'/g, "\\'"); 
-            const safeImage = menu.image.replace(/'/g, "\\'");
-            
-            // 處理多個星期的顯示格式 (將 "星期一,星期三" 縮寫為 "一, 三")
+            const safeName = menu.name.replace(/'/g, "\\'"); const safeDesc = menu.desc.replace(/'/g, "\\'"); const safeImage = menu.image.replace(/'/g, "\\'");
             const displayDays = menu.day.replace(/星期/g, "").replace(/,/g, ", ");
-            
-            // 判斷下架狀態與渲染 CSS
             const isHidden = (menu.status === "下架");
             const cardClass = isHidden ? "menu-card hidden-item" : "menu-card";
-            const statusBadge = isHidden ? 
-              `<div class="menu-card-status status-hidden">已下架</div>` : 
-              `<div class="menu-card-status status-active">上架中</div>`;
+            const statusBadge = isHidden ? `<div class="menu-card-status status-hidden">已下架</div>` : `<div class="menu-card-status status-active">上架中</div>`;
             const toggleIcon = isHidden ? "👁️ 重新上架" : "🚫 隱藏下架";
 
             container.innerHTML += `
@@ -502,43 +469,32 @@
                     <button class="btn-toggle-menu" onclick="toggleMenuStatus('${safeName}')">${toggleIcon}</button>
                     <button class="btn-edit-menu" onclick="startEditMenu('${menu.day}', '${safeName}', '${menu.price}', '${safeDesc}', '${safeImage}', '${menu.color}')">✏️ 編輯</button>
                     <button class="btn-delete-menu" onclick="deleteMenu('${safeName}', '${menu.day}')">🗑️</button>
-                  </div>
-                </div>
-              </div>`;
+                  </div></div></div>`;
           });
-        }
+        } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
       });
     }
 
     function toggleMenuStatus(itemName) {
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "toggleMenuStatus", itemName: itemName }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "toggleMenuStatus", itemName: itemName, token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
-      .then(data => { 
-        if (data.success) { fetchMenus(); } 
-        else { alert(data.message); } 
-      });
+      .then(data => { if (data.success) { fetchMenus(); } else { alert(data.message); if (data.message.includes("⛔")) logout(); } });
     }
 
     function deleteMenu(itemName, day) {
       if (!confirm(`確定要徹底刪除【${itemName}】嗎？\n(若只是暫時不供應，建議使用「隱藏下架」功能)`)) return;
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "deleteMenu", itemName: itemName, day: day }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "deleteMenu", itemName: itemName, day: day, token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
-      .then(data => { 
-        if (data.success) { fetchMenus(); } 
-      });
+      .then(data => { if (data.success) { fetchMenus(); } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); } });
     }
 
     function startEditMenu(daysStr, name, price, desc, image, color) {
-      isEditingMenu = true; 
-      editOriginalName = name; 
-      editOriginalDay = daysStr;
-      
+      isEditingMenu = true; editOriginalName = name; editOriginalDay = daysStr;
       document.getElementById("menu-form-title").innerText = "✏️ 編輯餐點";
-      
-      // 處理複選框的打勾狀態
       const checkboxes = document.querySelectorAll('#new-menu-days input[type="checkbox"]');
       checkboxes.forEach(cb => cb.checked = daysStr.includes(cb.value));
-      
       document.getElementById("new-menu-name").value = name;
       document.getElementById("new-menu-price").value = price; 
       document.getElementById("new-menu-desc").value = desc;
@@ -546,75 +502,47 @@
       document.getElementById("new-menu-color").value = color;
       
       const btn = document.getElementById("btn-submit-menu");
-      btn.innerText = "💾 儲存修改內容"; 
-      btn.style.backgroundColor = "#ff8c00";
+      btn.innerText = "💾 儲存修改內容"; btn.style.backgroundColor = "#ff8c00";
       document.getElementById("btn-cancel-edit").style.display = "block";
     }
 
     function cancelEdit() {
-      isEditingMenu = false; 
-      editOriginalName = ""; 
-      editOriginalDay = "";
+      isEditingMenu = false; editOriginalName = ""; editOriginalDay = "";
       document.getElementById("menu-form-title").innerText = "➕ 新增餐點";
-      
-      // 清空複選框與輸入欄位
       document.querySelectorAll('#new-menu-days input[type="checkbox"]').forEach(cb => cb.checked = false);
-      document.getElementById("new-menu-name").value = ""; 
-      document.getElementById("new-menu-price").value = "";
-      document.getElementById("new-menu-desc").value = ""; 
-      document.getElementById("new-menu-img").value = ""; 
+      document.getElementById("new-menu-name").value = ""; document.getElementById("new-menu-price").value = "";
+      document.getElementById("new-menu-desc").value = ""; document.getElementById("new-menu-img").value = ""; 
       document.getElementById("new-menu-color").value = "#1DB446";
       
       const btn = document.getElementById("btn-submit-menu");
-      btn.innerText = "🚀 確認上架餐點"; 
-      btn.style.backgroundColor = "#6B4FA2";
-      btn.disabled = false; // 恢復按鈕可點擊狀態
-      
+      btn.innerText = "🚀 確認上架餐點"; btn.style.backgroundColor = "#6B4FA2"; btn.disabled = false; 
       document.getElementById("btn-cancel-edit").style.display = "none";
     }
 
     function submitMenu() {
       const btn = document.getElementById("btn-submit-menu");
-      
-      // 收集有打勾的星期
       const checkedDays = Array.from(document.querySelectorAll('#new-menu-days input[type="checkbox"]:checked')).map(cb => cb.value).join(",");
-      
       const menuData = {
-        day: checkedDays,
-        name: document.getElementById("new-menu-name").value,
-        price: document.getElementById("new-menu-price").value, 
-        desc: document.getElementById("new-menu-desc").value,
-        image: document.getElementById("new-menu-img").value, 
-        color: document.getElementById("new-menu-color").value
+        day: checkedDays, name: document.getElementById("new-menu-name").value,
+        price: document.getElementById("new-menu-price").value, desc: document.getElementById("new-menu-desc").value,
+        image: document.getElementById("new-menu-img").value, color: document.getElementById("new-menu-color").value
       };
       
       if (!menuData.day) { alert("請至少勾選一個供應星期！"); return; }
       if (!menuData.name || !menuData.price || !menuData.desc) { alert("請填寫完整餐點資訊！"); return; }
       
-      btn.innerText = "處理中..."; 
-      btn.disabled = true; // 防呆鎖死按鈕
-      
-      const payload = { action: isEditingMenu ? "updateMenu" : "addMenu", data: menuData };
+      btn.innerText = "處理中..."; btn.disabled = true; 
+      // 🛡️ 將 Token 一併包裝進 payload 送出
+      const payload = { action: isEditingMenu ? "updateMenu" : "addMenu", data: menuData, token: localStorage.getItem("admin_token") };
       if (isEditingMenu) { payload.originalName = editOriginalName; payload.originalDay = editOriginalDay; }
 
       fetch(gasUrl, { method: "POST", body: JSON.stringify(payload) })
       .then(res => res.json())
       .then(data => {
-        if (data.success) { 
-          alert(data.message); 
-          cancelEdit(); // 內部會解鎖按鈕
-          fetchMenus(); 
-        } else { 
-          alert("操作失敗：" + data.message); 
-          btn.innerText = isEditingMenu ? "💾 儲存修改" : "🚀 確認上架"; 
-          btn.disabled = false; // 解鎖按鈕
-        }
+        if (data.success) { alert(data.message); cancelEdit(); fetchMenus(); } 
+        else { alert("操作失敗：" + data.message); btn.innerText = isEditingMenu ? "💾 儲存修改" : "🚀 確認上架"; btn.disabled = false; if (data.message.includes("⛔")) logout(); }
       })
-      .catch(err => {
-        alert("網路連線發生錯誤，請稍後再試。");
-        btn.innerText = isEditingMenu ? "💾 儲存修改" : "🚀 確認上架"; 
-        btn.disabled = false; // 發生錯誤時確保解鎖
-      });
+      .catch(err => { alert("網路連線發生錯誤，請稍後再試。"); btn.innerText = isEditingMenu ? "💾 儲存修改" : "🚀 確認上架"; btn.disabled = false; });
     }
 
     // --- 5. 報表匯出與批次匯入 ---
@@ -626,10 +554,10 @@
       if (!startDate || !endDate) { alert("請先選擇起始與結束日期！"); return; }
       if (startDate > endDate) { alert("起始日期不能晚於結束日期喔！"); return; }
 
-      btn.innerText = "⏳ 報表跨庫搜尋與產生中..."; 
-      btn.disabled = true;
+      btn.innerText = "⏳ 報表跨庫搜尋與產生中..."; btn.disabled = true;
 
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders", startDate: startDate, endDate: endDate }) })
+      // 🛡️ 帶上 Token 發送請求
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders", startDate: startDate, endDate: endDate, token: localStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data.length > 1) { 
@@ -639,96 +567,51 @@
              csvContent += row + "\r\n";
           });
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement("a");
-          const url = URL.createObjectURL(blob);
-          link.setAttribute("href", url);
-          link.setAttribute("download", `雄商合作社_區間報表_${startDate}_至_${endDate}.csv`);
-          link.style.visibility = 'hidden';
-          document.body.appendChild(link); 
-          link.click(); 
-          document.body.removeChild(link);
-        } else { 
-          alert("這段期間內，系統找不到任何訂單資料喔！"); 
-        }
-        btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; 
-        btn.disabled = false;
+          const link = document.createElement("a"); const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url); link.setAttribute("download", `雄商合作社_區間報表_${startDate}_至_${endDate}.csv`);
+          link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
+        else { alert("這段期間內，系統找不到任何訂單資料喔！"); }
+        btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; btn.disabled = false;
       })
-      .catch(err => { 
-        alert("匯出失敗，請檢查網路連線。"); 
-        btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; 
-        btn.disabled = false; 
-      });
+      .catch(err => { alert("匯出失敗，請檢查網路連線。"); btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; btn.disabled = false; });
     }
 
     function downloadImportTemplate() {
       const csvContent = "\uFEFF班級,學號,姓名,驗證碼,初始餘額(選填)\n101,150001,王小明,E12340801,500\n102,150002,陳小華,A12340505,0";
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a"); 
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url); 
-      link.setAttribute("download", "雄商合作社_批次匯入範例檔.csv");
-      link.style.visibility = 'hidden'; 
-      document.body.appendChild(link); 
-      link.click(); 
-      document.body.removeChild(link);
+      const link = document.createElement("a"); const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url); link.setAttribute("download", "雄商合作社_批次匯入範例檔.csv");
+      link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
     function importMembers() {
       const fileInput = document.getElementById("import-file");
-      if (fileInput.files.length === 0) { 
-        alert("請先選擇要上傳的 CSV 檔案！"); 
-        return; 
-      }
-      const file = fileInput.files[0]; 
-      const reader = new FileReader();
+      if (fileInput.files.length === 0) { alert("請先選擇要上傳的 CSV 檔案！"); return; }
+      const file = fileInput.files[0]; const reader = new FileReader();
       const btn = document.getElementById("btn-import-members");
       
-      btn.innerText = "⏳ 檔案解析中..."; 
-      btn.disabled = true;
+      btn.innerText = "⏳ 檔案解析中..."; btn.disabled = true;
 
       reader.onload = function(e) {
-        const textData = e.target.result; 
-        const rows = textData.split(/\r?\n/); 
-        const membersToImport = [];
-        
+        const textData = e.target.result; const rows = textData.split(/\r?\n/); const membersToImport = [];
         for (let i = 1; i < rows.length; i++) {
-          let cols = rows[i].split(","); 
-          cols = cols.map(c => c.trim().replace(/^"|"$/g, ''));
-          if (cols.length >= 4 && cols[0] !== "") { 
-            membersToImport.push(cols); 
-          }
+          let cols = rows[i].split(","); cols = cols.map(c => c.trim().replace(/^"|"$/g, ''));
+          if (cols.length >= 4 && cols[0] !== "") { membersToImport.push(cols); }
         }
         
-        if (membersToImport.length === 0) { 
-          alert("無法解析資料或檔案為空"); 
-          btn.innerText = "🚀 啟動檔案匯入"; 
-          btn.disabled = false; 
-          return; 
-        }
-        
-        if (!confirm(`系統偵測到 ${membersToImport.length} 筆資料，準備開始匯入？`)) { 
-          btn.innerText = "🚀 啟動檔案匯入"; 
-          btn.disabled = false; 
-          return; 
-        }
+        if (membersToImport.length === 0) { alert("無法解析資料或檔案為空"); btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false; return; }
+        if (!confirm(`系統偵測到 ${membersToImport.length} 筆資料，準備開始匯入？`)) { btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false; return; }
         
         btn.innerText = "⏳ 匯入處理中...";
-        fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "importMembers", members: membersToImport }) })
+        // 🛡️ 帶上 Token 發送請求
+        fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "importMembers", members: membersToImport, token: localStorage.getItem("admin_token") }) })
         .then(res => res.json())
         .then(data => {
-          if (data.success) { 
-            alert(data.message); 
-            document.getElementById("import-file").value = ""; 
-          } else { 
-            alert("匯入失敗"); 
-          }
-          btn.innerText = "🚀 啟動檔案匯入"; 
-          btn.disabled = false;
-        }).catch(err => { 
-          alert("匯入連線錯誤"); 
-          btn.innerText = "🚀 啟動檔案匯入"; 
-          btn.disabled = false; 
-        });
+          if (data.success) { alert(data.message); document.getElementById("import-file").value = ""; } 
+          else { alert("匯入失敗: " + data.message); if (data.message.includes("⛔")) logout(); }
+          btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false;
+        }).catch(err => { alert("匯入連線錯誤"); btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false; });
       };
       
       reader.readAsText(file, 'UTF-8');
