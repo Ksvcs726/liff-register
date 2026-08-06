@@ -287,13 +287,44 @@
     let editOriginalName = ""; 
     let editOriginalDay = "";
 
+    // 🌟 資安升級：閒置計時器變數
+    let idleTimer;
+    const IDLE_TIMEOUT = 15 * 60 * 1000; // 15 分鐘 (毫秒計算：15 * 60秒 * 1000)
+
     window.onload = function() {
       generateCaptcha();
-      // 🌟 資安升級：只要有 Token 就嘗試進入，若 Token 無效後端會自動阻擋
-      if (localStorage.getItem("admin_token")) {
+      // 🌟 將 localStorage 替換為 sessionStorage (網頁分頁關閉即失效)
+      if (sessionStorage.getItem("admin_token")) {
         showDashboard();
+        startIdleTimer(); // 啟動閒置偵測
       }
+      
+      // 監聽使用者的各種動作 (滑鼠移動、點擊、按鍵盤、滾動)，有動作就重置計時器
+      document.addEventListener("mousemove", resetIdleTimer);
+      document.addEventListener("keypress", resetIdleTimer);
+      document.addEventListener("click", resetIdleTimer);
+      document.addEventListener("scroll", resetIdleTimer);
     };
+
+    // --- 🌟 閒置登出邏輯 ---
+    function startIdleTimer() {
+      idleTimer = setTimeout(autoLogout, IDLE_TIMEOUT);
+    }
+
+    function resetIdleTimer() {
+      // 只有在已登入的狀態下，才需要不斷重置計時器
+      if (sessionStorage.getItem("admin_token")) {
+        clearTimeout(idleTimer);
+        startIdleTimer();
+      }
+    }
+
+    function autoLogout() {
+      sessionStorage.removeItem("admin_token");
+      alert("⏱️ 您已閒置超過 15 分鐘，為保護系統安全，已自動為您登出！");
+      location.reload();
+    }
+    // -----------------------
 
     // --- 1. 系統登入與初始化 ---
     function generateCaptcha() {
@@ -323,8 +354,9 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) { 
-          localStorage.setItem("admin_token", data.token); // 儲存後端發放的專屬金鑰
+          sessionStorage.setItem("admin_token", data.token); // 改用 sessionStorage
           showDashboard(); 
+          startIdleTimer(); // 登入成功後啟動計時器
         } else { 
           showError("帳號或密碼錯誤"); 
           generateCaptcha(); 
@@ -335,7 +367,7 @@
     }
 
     function logout() { 
-      localStorage.removeItem("admin_token"); 
+      sessionStorage.removeItem("admin_token"); 
       location.reload(); 
     }
 
@@ -358,8 +390,7 @@
 
     // --- 2. 營運總覽與訂單明細 ---
     function fetchDashboardData() {
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAdminDashboardData", token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAdminDashboardData", token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -400,8 +431,7 @@
     function searchMember() {
       const studentId = document.getElementById("search-uid-input").value;
       if (!studentId) return;
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "searchStudent", studentId: studentId, token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "searchStudent", studentId: studentId, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.found) {
@@ -419,8 +449,7 @@
       const amount = document.getElementById("trade-amount").value;
       if (!amount || amount <= 0) return;
       if (!confirm(`確定要為學號 ${currentActiveStudent} 進行作業，金額 $${amount} 嗎？`)) return;
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "updateBalance", studentId: currentActiveStudent, amount: amount, type: type, token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "updateBalance", studentId: currentActiveStudent, amount: amount, type: type, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => { if (data.success) { alert(data.message); searchMember(); } else { alert(data.message); if (data.message.includes("⛔")) logout(); } });
     }
@@ -428,8 +457,7 @@
     function unbindMemberLINE() {
       if (!currentActiveStudent) return;
       if (!confirm(`⚠️ 確定要解除學號 ${currentActiveStudent} 的 LINE 綁定嗎？\n(解除後該生需重新在手機點擊註冊網址才能點餐，但餘額不會消失)`)) return;
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "unbindLINE", studentId: currentActiveStudent, token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "unbindLINE", studentId: currentActiveStudent, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => { if (data.success) alert(data.message); else { alert("發生錯誤：" + data.message); if (data.message.includes("⛔")) logout(); } })
       .catch(err => { alert("網路連線失敗"); });
@@ -439,8 +467,7 @@
     function fetchMenus() {
       const container = document.getElementById("menu-grid-container");
       container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;">資料載入中...</div>';
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getMenus", token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getMenus", token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -476,16 +503,14 @@
     }
 
     function toggleMenuStatus(itemName) {
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "toggleMenuStatus", itemName: itemName, token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "toggleMenuStatus", itemName: itemName, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => { if (data.success) { fetchMenus(); } else { alert(data.message); if (data.message.includes("⛔")) logout(); } });
     }
 
     function deleteMenu(itemName, day) {
       if (!confirm(`確定要徹底刪除【${itemName}】嗎？\n(若只是暫時不供應，建議使用「隱藏下架」功能)`)) return;
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "deleteMenu", itemName: itemName, day: day, token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "deleteMenu", itemName: itemName, day: day, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => { if (data.success) { fetchMenus(); } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); } });
     }
@@ -532,8 +557,7 @@
       if (!menuData.name || !menuData.price || !menuData.desc) { alert("請填寫完整餐點資訊！"); return; }
       
       btn.innerText = "處理中..."; btn.disabled = true; 
-      // 🛡️ 將 Token 一併包裝進 payload 送出
-      const payload = { action: isEditingMenu ? "updateMenu" : "addMenu", data: menuData, token: localStorage.getItem("admin_token") };
+      const payload = { action: isEditingMenu ? "updateMenu" : "addMenu", data: menuData, token: sessionStorage.getItem("admin_token") };
       if (isEditingMenu) { payload.originalName = editOriginalName; payload.originalDay = editOriginalDay; }
 
       fetch(gasUrl, { method: "POST", body: JSON.stringify(payload) })
@@ -556,8 +580,7 @@
 
       btn.innerText = "⏳ 報表跨庫搜尋與產生中..."; btn.disabled = true;
 
-      // 🛡️ 帶上 Token 發送請求
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders", startDate: startDate, endDate: endDate, token: localStorage.getItem("admin_token") }) })
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders", startDate: startDate, endDate: endDate, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data.length > 1) { 
@@ -604,8 +627,7 @@
         if (!confirm(`系統偵測到 ${membersToImport.length} 筆資料，準備開始匯入？`)) { btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false; return; }
         
         btn.innerText = "⏳ 匯入處理中...";
-        // 🛡️ 帶上 Token 發送請求
-        fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "importMembers", members: membersToImport, token: localStorage.getItem("admin_token") }) })
+        fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "importMembers", members: membersToImport, token: sessionStorage.getItem("admin_token") }) })
         .then(res => res.json())
         .then(data => {
           if (data.success) { alert(data.message); document.getElementById("import-file").value = ""; } 
