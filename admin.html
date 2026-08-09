@@ -62,10 +62,22 @@
     th { background-color: #f8f9fa; padding: 15px 20px; color: #555; font-weight: bold; border-bottom: 2px solid #eee; }
     td { padding: 15px 20px; border-bottom: 1px solid #eee; color: #333; }
 
-    /* === 會員管理 CSS === */
-    .member-search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); display: flex; gap: 15px; margin-bottom: 20px; }
-    .member-search-box button { padding: 12px 25px; background: #6B4FA2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
-    #member-info-card { display: none; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    /* === 🌟 會員管理升級 CSS === */
+    .member-search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); display: flex; gap: 15px; margin-bottom: 20px; align-items: stretch; flex-wrap: wrap; }
+    .member-search-box input { flex: 1; font-size: 20px; padding: 15px 20px; border: 2px solid #ddd; border-radius: 8px; min-width: 250px; transition: 0.3s; box-sizing: border-box;}
+    .member-search-box input:focus { border-color: #6B4FA2; outline: none; box-shadow: 0 0 0 3px rgba(107, 79, 162, 0.2); }
+    .member-search-box button { padding: 15px 30px; background: #6B4FA2; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.2s;}
+    .member-search-box button:hover { background: #553c82; }
+    .btn-export-members { background: #1677ff !important; }
+    .btn-export-members:hover { background: #0958d9 !important; }
+    
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; background: white; border-top: 1px solid #eee; }
+    .pagination button { padding: 8px 15px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 6px; cursor: pointer; font-weight: bold; color: #555; font-size: 14px;}
+    .pagination button:hover { background: #e9ecef; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { font-weight: bold; color: #6B4FA2; }
+
+    #member-info-card { display: none; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 30px;}
     .info-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eee; }
     .info-label { color: #888; font-weight: bold; }
     .info-data { color: #333; font-weight: bold; font-size: 18px; }
@@ -176,10 +188,14 @@
 
         <!-- 模組 3: 會員與儲值管理 -->
         <div id="tab-members" class="tab-content">
+          <!-- 🌟 升級版大搜尋框與匯出按鈕 -->
           <div class="member-search-box">
             <input type="number" id="search-uid-input" placeholder="請輸入學生學號 (例如: 150001)" onkeypress="if(event.key === 'Enter') searchMember()">
             <button onclick="searchMember()">🔍 查詢會員</button>
+            <button class="btn-export-members" onclick="exportMembersListCSV()">📥 匯出會員名單 (.csv)</button>
           </div>
+          
+          <!-- 搜尋結果管理卡片 -->
           <div id="member-info-card">
             <div class="info-row"><span class="info-label">班級與姓名</span><span class="info-data" id="mem-name">--</span></div>
             <div class="info-row"><span class="info-label">學號</span><span class="info-data" id="mem-id">--</span></div>
@@ -191,12 +207,32 @@
               </div>
               <div class="action-row">
                 <span style="font-weight:bold;">$</span>
-                <input type="number" id="trade-amount" placeholder="輸入金額">
+                <input type="number" id="trade-amount" placeholder="輸入金額" style="flex:1; padding:10px; font-size:16px;">
                 <button class="btn-add" onclick="processTrade('add')">➕ 儲值 (入金)</button>
                 <button class="btn-deduct" onclick="processTrade('deduct')">➖ 扣款 (退費)</button>
               </div>
             </div>
           </div>
+
+          <!-- 🌟 新增：全校會員名單表格 (含分頁) -->
+          <div class="table-container" id="member-list-container">
+            <div style="padding: 15px 20px; background: #f8f9fa; border-bottom: 2px solid #eee; font-weight: bold; color: #333; display: flex; justify-content: space-between; align-items: center;">
+              <span>📋 全校會員名單</span>
+              <span id="total-members-count" style="color: #888; font-size: 14px;">共 0 筆</span>
+            </div>
+            <table>
+              <thead><tr><th>班級</th><th>學號</th><th>姓名</th><th>儲值餘額</th><th>LINE 綁定狀態</th><th>操作</th></tr></thead>
+              <tbody id="member-list-body">
+                <tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">資料載入中...</td></tr>
+              </tbody>
+            </table>
+            <div class="pagination">
+              <button id="btn-prev-page" onclick="changeMemberPage(-1)">上一頁</button>
+              <span class="page-info" id="member-page-info">第 1 / 1 頁</span>
+              <button id="btn-next-page" onclick="changeMemberPage(1)">下一頁</button>
+            </div>
+          </div>
+
         </div>
 
         <!-- 模組 4: 餐點與菜單管理 -->
@@ -287,46 +323,30 @@
     let editOriginalName = ""; 
     let editOriginalDay = "";
 
-    // 🌟 資安升級：閒置計時器變數
+    // 🌟 會員分頁全域變數
+    let allMembersData = [];
+    let currentMemberPage = 1;
+    const MEMBERS_PER_PAGE = 50; // 每頁顯示 50 筆學生資料
+
     let idleTimer;
-    const IDLE_TIMEOUT = 15 * 60 * 1000; // 15 分鐘 (毫秒計算：15 * 60秒 * 1000)
+    const IDLE_TIMEOUT = 15 * 60 * 1000; 
 
     window.onload = function() {
       generateCaptcha();
-      // 🌟 將 localStorage 替換為 sessionStorage (網頁分頁關閉即失效)
       if (sessionStorage.getItem("admin_token")) {
         showDashboard();
-        startIdleTimer(); // 啟動閒置偵測
+        startIdleTimer();
       }
-      
-      // 監聽使用者的各種動作 (滑鼠移動、點擊、按鍵盤、滾動)，有動作就重置計時器
       document.addEventListener("mousemove", resetIdleTimer);
       document.addEventListener("keypress", resetIdleTimer);
       document.addEventListener("click", resetIdleTimer);
       document.addEventListener("scroll", resetIdleTimer);
     };
 
-    // --- 🌟 閒置登出邏輯 ---
-    function startIdleTimer() {
-      idleTimer = setTimeout(autoLogout, IDLE_TIMEOUT);
-    }
+    function startIdleTimer() { idleTimer = setTimeout(autoLogout, IDLE_TIMEOUT); }
+    function resetIdleTimer() { if (sessionStorage.getItem("admin_token")) { clearTimeout(idleTimer); startIdleTimer(); } }
+    function autoLogout() { sessionStorage.removeItem("admin_token"); alert("⏱️ 您已閒置超過 15 分鐘，為保護系統安全，已自動為您登出！"); location.reload(); }
 
-    function resetIdleTimer() {
-      // 只有在已登入的狀態下，才需要不斷重置計時器
-      if (sessionStorage.getItem("admin_token")) {
-        clearTimeout(idleTimer);
-        startIdleTimer();
-      }
-    }
-
-    function autoLogout() {
-      sessionStorage.removeItem("admin_token");
-      alert("⏱️ 您已閒置超過 15 分鐘，為保護系統安全，已自動為您登出！");
-      location.reload();
-    }
-    // -----------------------
-
-    // --- 1. 系統登入與初始化 ---
     function generateCaptcha() {
       currentCaptcha = Math.floor(1000 + Math.random() * 9000).toString();
       document.getElementById("captcha-display").innerText = currentCaptcha;
@@ -334,8 +354,7 @@
 
     function showError(msg) {
       const errorDiv = document.getElementById("login-error");
-      errorDiv.innerText = msg; 
-      errorDiv.style.display = "block";
+      errorDiv.innerText = msg; errorDiv.style.display = "block";
     }
 
     function attemptLogin() {
@@ -354,22 +373,16 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) { 
-          sessionStorage.setItem("admin_token", data.token); // 改用 sessionStorage
+          sessionStorage.setItem("admin_token", data.token); 
           showDashboard(); 
-          startIdleTimer(); // 登入成功後啟動計時器
+          startIdleTimer(); 
         } else { 
-          showError("帳號或密碼錯誤"); 
-          generateCaptcha(); 
-          document.getElementById("captcha-input").value = ""; 
-          btn.innerText = "登入系統"; 
+          showError("帳號或密碼錯誤"); generateCaptcha(); document.getElementById("captcha-input").value = ""; btn.innerText = "登入系統"; 
         }
       });
     }
 
-    function logout() { 
-      sessionStorage.removeItem("admin_token"); 
-      location.reload(); 
-    }
+    function logout() { sessionStorage.removeItem("admin_token"); location.reload(); }
 
     function showDashboard() {
       document.getElementById("login-section").style.display = "none";
@@ -386,9 +399,9 @@
       document.getElementById(targetId).classList.add('active');
       
       if (targetId === 'tab-menus') fetchMenus();
+      if (targetId === 'tab-members') fetchAllMembers(); // 🌟 切換到會員分頁時，自動抓取名單
     }
 
-    // --- 2. 營運總覽與訂單明細 ---
     function fetchDashboardData() {
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAdminDashboardData", token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
@@ -427,7 +440,7 @@
       });
     }
 
-    // --- 3. 會員與儲值管理 ---
+    // === 🌟 升級版：會員與儲值管理 ===
     function searchMember() {
       const studentId = document.getElementById("search-uid-input").value;
       if (!studentId) return;
@@ -451,7 +464,13 @@
       if (!confirm(`確定要為學號 ${currentActiveStudent} 進行作業，金額 $${amount} 嗎？`)) return;
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "updateBalance", studentId: currentActiveStudent, amount: amount, type: type, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
-      .then(data => { if (data.success) { alert(data.message); searchMember(); } else { alert(data.message); if (data.message.includes("⛔")) logout(); } });
+      .then(data => { 
+        if (data.success) { 
+          alert(data.message); 
+          searchMember(); 
+          fetchAllMembers(); // 同步更新下方表格
+        } else { alert(data.message); if (data.message.includes("⛔")) logout(); } 
+      });
     }
 
     function unbindMemberLINE() {
@@ -459,8 +478,102 @@
       if (!confirm(`⚠️ 確定要解除學號 ${currentActiveStudent} 的 LINE 綁定嗎？\n(解除後該生需重新在手機點擊註冊網址才能點餐，但餘額不會消失)`)) return;
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "unbindLINE", studentId: currentActiveStudent, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
-      .then(data => { if (data.success) alert(data.message); else { alert("發生錯誤：" + data.message); if (data.message.includes("⛔")) logout(); } })
+      .then(data => { 
+        if (data.success) {
+          alert(data.message); 
+          fetchAllMembers(); // 同步更新下方表格
+        } else { alert("發生錯誤：" + data.message); if (data.message.includes("⛔")) logout(); } 
+      })
       .catch(err => { alert("網路連線失敗"); });
+    }
+
+    // 🌟 獲取全校名單
+    function fetchAllMembers() {
+      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAllMembers", token: sessionStorage.getItem("admin_token") }) })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          allMembersData = data.members;
+          currentMemberPage = 1;
+          renderMemberTable();
+        } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
+      });
+    }
+
+    // 🌟 渲染名單表格與分頁邏輯
+    function renderMemberTable() {
+      const tbody = document.getElementById("member-list-body");
+      const totalCount = allMembersData.length;
+      document.getElementById("total-members-count").innerText = `共 ${totalCount} 筆`;
+
+      if (totalCount === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">目前尚無會員資料，請先匯入基本資料。</td></tr>';
+        document.getElementById("member-page-info").innerText = "第 1 / 1 頁";
+        document.getElementById("btn-prev-page").disabled = true;
+        document.getElementById("btn-next-page").disabled = true;
+        return;
+      }
+
+      const totalPages = Math.ceil(totalCount / MEMBERS_PER_PAGE);
+      if (currentMemberPage < 1) currentMemberPage = 1;
+      if (currentMemberPage > totalPages) currentMemberPage = totalPages;
+
+      document.getElementById("member-page-info").innerText = `第 ${currentMemberPage} / ${totalPages} 頁`;
+      document.getElementById("btn-prev-page").disabled = currentMemberPage === 1;
+      document.getElementById("btn-next-page").disabled = currentMemberPage === totalPages;
+
+      const startIndex = (currentMemberPage - 1) * MEMBERS_PER_PAGE;
+      const endIndex = Math.min(startIndex + MEMBERS_PER_PAGE, totalCount);
+
+      tbody.innerHTML = "";
+      for (let i = startIndex; i < endIndex; i++) {
+        const m = allMembersData[i];
+        const statusColor = m.isBound === "已綁定" ? "#52c41a" : "#999";
+        tbody.innerHTML += `
+          <tr>
+            <td>${m.className}</td>
+            <td>${m.studentId}</td>
+            <td>${m.name}</td>
+            <td style="color:#ff8c00; font-weight:bold;">$${m.balance}</td>
+            <td><span style="color:${statusColor}; border:1px solid ${statusColor}; padding:2px 8px; border-radius:12px; font-size:12px;">${m.isBound}</span></td>
+            <td><button style="background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; padding:4px 10px; border-radius:4px; cursor:pointer;" onclick="fillAndSearch('${m.studentId}')">快速管理</button></td>
+          </tr>
+        `;
+      }
+    }
+
+    function changeMemberPage(delta) {
+      currentMemberPage += delta;
+      renderMemberTable();
+    }
+
+    // 🌟 點擊表格的「快速管理」自動帶入上方搜尋框
+    function fillAndSearch(studentId) {
+      document.getElementById("search-uid-input").value = studentId;
+      searchMember();
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // 自動捲動到最上方
+    }
+
+    // 🌟 一鍵匯出全校會員資料為 CSV
+    function exportMembersListCSV() {
+      if (allMembersData.length === 0) {
+        alert("目前沒有會員資料可匯出！");
+        return;
+      }
+      let csvContent = "\uFEFF班級,學號,姓名,儲值餘額,LINE 綁定狀態\n";
+      allMembersData.forEach(m => {
+        csvContent += `${m.className},${m.studentId},${m.name},${m.balance},${m.isBound}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `雄商合作社_全校會員名單_${new Date().toLocaleDateString().replace(/\//g, '')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     // --- 4. 菜單與餐點管理 ---
