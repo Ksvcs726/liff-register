@@ -48,21 +48,29 @@
     .stat-title { color: #888; font-size: 15px; margin-bottom: 10px; font-weight: bold; }
     .stat-value { color: #6B4FA2; font-size: 32px; font-weight: bold; }
     .stat-value.money { color: #ff8c00; }
-    .class-stats-section { margin-top: 30px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
-    .class-stats-title { color: #333; font-size: 18px; border-bottom: 2px solid #f0f2f5; padding-bottom: 12px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
-    .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-    .class-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 15px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-    .class-card-header { font-size: 20px; font-weight: bold; color: #1677ff; margin-bottom: 15px; border-bottom: 2px dashed #eee; padding-bottom: 10px; text-align: center; letter-spacing: 1px; }
-    .class-item-row { display: flex; justify-content: space-between; font-size: 15px; color: #333; margin-bottom: 10px; align-items: center; }
-    .class-item-name { flex: 1; padding-right: 10px; }
-    .class-item-count { font-weight: bold; color: #ff4d4f; font-size: 16px; background: #fff1f0; padding: 3px 10px; border-radius: 12px; }
-    .class-card-total { margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; text-align: right; font-size: 14px; color: #888; font-weight: bold; }
-    .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { background-color: #f8f9fa; padding: 15px 20px; color: #555; font-weight: bold; border-bottom: 2px solid #eee; }
-    td { padding: 15px 20px; border-bottom: 1px solid #eee; color: #333; }
+    
+    /* 🌟 新增：交叉分析統計表 CSS */
+    .pivot-table-container { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); padding: 25px; margin-top: 30px;}
+    .pivot-table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; font-size: 15px;}
+    .pivot-table th, .pivot-table td { border: 1px solid #e8e8e8; padding: 12px; }
+    .pivot-table th { background-color: #f8f9fa; color: #333; font-weight: bold; border-bottom: 2px solid #ddd;}
+    .pivot-table td.sticky-col, .pivot-table th.sticky-col { position: sticky; left: 0; z-index: 2; font-weight: bold; text-align: left; min-width: 150px;}
+    .pivot-table th.sticky-col { background-color: #f8f9fa; z-index: 3;}
+    .pivot-table td.sticky-col { background-color: #fff; border-right: 2px solid #ddd; box-shadow: 2px 0 5px rgba(0,0,0,0.02);}
+    .pivot-table tr:nth-child(even) td.sticky-col { background-color: #fafafa; }
+    .pivot-table tr:nth-child(even) { background-color: #fafafa; }
+    .pivot-table tr:hover { background-color: #f0f5ff; }
+    .pivot-table tr:hover td.sticky-col { background-color: #f0f5ff; }
+    .pivot-table .row-total { background-color: #e6f7ff; color: #1677ff; font-weight: bold; }
+    .pivot-table .col-total-count { background-color: #fff1f0 !important; color: #ff4d4f; font-weight: bold; border-top: 2px solid #ffccc7;}
+    .pivot-table .col-total-amount { background-color: #fffbe6 !important; color: #d48806; font-weight: bold; border-top: 1px solid #ffe58f;}
 
-    /* === 🌟 會員管理升級 CSS === */
+    .table-container { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); overflow: hidden; margin-top: 30px;}
+    table.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+    table.data-table th { background-color: #f8f9fa; padding: 15px 20px; color: #555; font-weight: bold; border-bottom: 2px solid #eee; }
+    table.data-table td { padding: 15px 20px; border-bottom: 1px solid #eee; color: #333; }
+
+    /* === 會員管理 CSS === */
     .member-search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); display: flex; gap: 15px; margin-bottom: 20px; align-items: stretch; flex-wrap: wrap; }
     .member-search-box input { flex: 1; font-size: 20px; padding: 15px 20px; border: 2px solid #ddd; border-radius: 8px; min-width: 250px; transition: 0.3s; box-sizing: border-box;}
     .member-search-box input:focus { border-color: #6B4FA2; outline: none; box-shadow: 0 0 0 3px rgba(107, 79, 162, 0.2); }
@@ -82,9 +90,6 @@
     .info-label { color: #888; font-weight: bold; }
     .info-data { color: #333; font-weight: bold; font-size: 18px; }
     .info-balance { color: #ff8c00; font-size: 24px; font-weight: bold; }
-    .action-row { display: flex; gap: 15px; margin-top: 20px; align-items: center; }
-    .btn-add { background: #52c41a; color: white; padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
-    .btn-deduct { background: #ff4d4f; color: white; padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
     /* === 餐點管理 CSS === */
     .menu-layout { display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; }
@@ -168,10 +173,15 @@
             <div class="stat-card"><span class="stat-title">今日總訂單數</span><span class="stat-value" id="dash-order-count">--</span></div>
             <div class="stat-card"><span class="stat-title">今日預估營業額</span><span class="stat-value money" id="dash-revenue">$ --</span></div>
           </div>
-          <div class="class-stats-section">
-            <div class="class-stats-title">📦 各班級餐點分發統計 (今日)</div>
-            <div class="class-grid" id="class-stats-container">
-              <div style="grid-column: 1 / -1; text-align: center; color: #999;">資料載入中...</div>
+          
+          <!-- 🌟 升級版：動態交叉分析統計表 -->
+          <div class="pivot-table-container">
+            <div style="font-size: 18px; font-weight: bold; color: #333; margin-bottom: 20px;">📊 今日各班訂購總表 (交叉分析)</div>
+            <div style="overflow-x:auto;">
+              <table class="pivot-table" id="dashboard-pivot-table">
+                <!-- 資料將由 JS 自動繪製 -->
+                <tr><td style="color:#999;">資料載入中...</td></tr>
+              </table>
             </div>
           </div>
         </div>
@@ -179,7 +189,7 @@
         <!-- 模組 2: 訂單明細管理 -->
         <div id="tab-orders" class="tab-content">
           <div class="table-container">
-            <table>
+            <table class="data-table">
               <thead><tr><th>時間</th><th>班級 / 學號 / 姓名</th><th>訂購品項</th><th>扣款金額</th></tr></thead>
               <tbody id="order-list-body"></tbody>
             </table>
@@ -188,39 +198,31 @@
 
         <!-- 模組 3: 會員與儲值管理 -->
         <div id="tab-members" class="tab-content">
-          <!-- 🌟 升級版大搜尋框與匯出按鈕 -->
           <div class="member-search-box">
             <input type="number" id="search-uid-input" placeholder="請輸入學生學號 (例如: 150001)" onkeypress="if(event.key === 'Enter') searchMember()">
             <button onclick="searchMember()">🔍 查詢會員</button>
             <button class="btn-export-members" onclick="exportMembersListCSV()">📥 匯出會員名單 (.csv)</button>
           </div>
           
-          <!-- 搜尋結果管理卡片 -->
           <div id="member-info-card">
             <div class="info-row"><span class="info-label">班級與姓名</span><span class="info-data" id="mem-name">--</span></div>
             <div class="info-row"><span class="info-label">學號</span><span class="info-data" id="mem-id">--</span></div>
             <div class="info-row" style="border:none; margin-bottom:0;"><span class="info-label">目前餘額</span><span class="info-balance" id="mem-balance">$ 0</span></div>
             <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin-top:20px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-bottom: 15px;">
-                <span class="info-label">⚙️ 帳號管理與手動加扣款</span>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="info-label">⚙️ 帳號管理</span>
+                <!-- 🌟 精簡版：只保留解除 LINE 綁定按鈕 -->
                 <button style="background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="unbindMemberLINE()" onmouseover="this.style.background='#ff4d4f'; this.style.color='white';" onmouseout="this.style.background='#fff1f0'; this.style.color='#ff4d4f';">🔌 解除 LINE 綁定</button>
-              </div>
-              <div class="action-row">
-                <span style="font-weight:bold;">$</span>
-                <input type="number" id="trade-amount" placeholder="輸入金額" style="flex:1; padding:10px; font-size:16px;">
-                <button class="btn-add" onclick="processTrade('add')">➕ 儲值 (入金)</button>
-                <button class="btn-deduct" onclick="processTrade('deduct')">➖ 扣款 (退費)</button>
               </div>
             </div>
           </div>
 
-          <!-- 🌟 新增：全校會員名單表格 (含分頁) -->
           <div class="table-container" id="member-list-container">
             <div style="padding: 15px 20px; background: #f8f9fa; border-bottom: 2px solid #eee; font-weight: bold; color: #333; display: flex; justify-content: space-between; align-items: center;">
               <span>📋 全校會員名單</span>
               <span id="total-members-count" style="color: #888; font-size: 14px;">共 0 筆</span>
             </div>
-            <table>
+            <table class="data-table">
               <thead><tr><th>班級</th><th>學號</th><th>姓名</th><th>儲值餘額</th><th>LINE 綁定狀態</th><th>操作</th></tr></thead>
               <tbody id="member-list-body">
                 <tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">資料載入中...</td></tr>
@@ -232,7 +234,6 @@
               <button id="btn-next-page" onclick="changeMemberPage(1)">下一頁</button>
             </div>
           </div>
-
         </div>
 
         <!-- 模組 4: 餐點與菜單管理 -->
@@ -240,7 +241,6 @@
           <div class="menu-layout">
             <div class="menu-form-box">
               <h3 id="menu-form-title" style="margin-top:0; color:#6B4FA2; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px;">➕ 新增餐點</h3>
-              
               <div class="input-group">
                 <label>供應星期 (可複選)</label>
                 <div class="checkbox-group" id="new-menu-days">
@@ -251,7 +251,6 @@
                   <label><input type="checkbox" value="星期五"> 星期五</label>
                 </div>
               </div>
-              
               <div class="input-group"><label>餐點名稱</label><input type="text" id="new-menu-name" placeholder="例如：黃金炸豬排飯"></div>
               <div class="input-group"><label>價格 (元)</label><input type="number" id="new-menu-price" placeholder="例如：65"></div>
               <div class="input-group">
@@ -282,15 +281,25 @@
 
         <!-- 模組 5: 報表與批次匯入 -->
         <div id="tab-reports" class="tab-content">
+          <!-- 🌟 升級版：結帳報表專屬匯出 -->
           <div class="report-card">
-            <h3>📊 自訂區間匯出訂單</h3>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">選擇您要結帳的日期區間，系統會自動跨越目前與歷史封存庫，彙整出一份完整的 CSV 報表。</p>
-            <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; max-width: 500px;">
-              <div class="input-group" style="margin-bottom: 0; flex: 1;"><label>起始日期</label><input type="date" id="export-start-date"></div>
-              <span style="color: #999; font-weight: bold; margin-top: 25px;">～</span>
-              <div class="input-group" style="margin-bottom: 0; flex: 1;"><label>結束日期</label><input type="date" id="export-end-date"></div>
+            <h3>📊 結帳報表匯出 (格式：學號, 當日訂購須扣除金額)</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">系統將自動加總每位學生在選定期間內的總扣除金額。</p>
+            
+            <div style="margin-bottom: 25px; padding: 20px; background: #f0f5ff; border-radius: 8px; border-left: 4px solid #1677ff;">
+              <span style="font-weight:bold; display:block; margin-bottom:10px; color:#0958d9;">快速匯出今日：</span>
+              <button class="export-btn" style="background:#52c41a;" onclick="exportCheckoutCSV('today')">📥 下載當日結帳報表 (.csv)</button>
             </div>
-            <button class="export-btn" id="btn-export-csv" onclick="exportOrdersCSV()">📥 點此下載自訂區間報表 (.csv)</button>
+
+            <div style="border-top: 1px dashed #ddd; padding-top: 20px;">
+              <span style="font-weight:bold; display:block; margin-bottom:15px; color:#333;">自訂區間匯出：</span>
+              <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; max-width: 500px;">
+                <div class="input-group" style="margin-bottom: 0; flex: 1;"><label>起始日期</label><input type="date" id="export-start-date"></div>
+                <span style="color: #999; font-weight: bold; margin-top: 25px;">～</span>
+                <div class="input-group" style="margin-bottom: 0; flex: 1;"><label>結束日期</label><input type="date" id="export-end-date"></div>
+              </div>
+              <button class="export-btn" id="btn-export-csv-range" onclick="exportCheckoutCSV('range')">📥 下載自訂區間結帳報表 (.csv)</button>
+            </div>
           </div>
 
           <div class="report-card">
@@ -305,7 +314,7 @@
               <button class="template-btn" onclick="downloadImportTemplate()">📄 下載 CSV 格式範例檔</button>
             </div>
             <div class="file-upload-box"><input type="file" id="import-file" accept=".csv"></div>
-            <button class="login-btn" id="btn-import-members" style="width: auto; padding: 12px 30px;" onclick="importMembers()">🚀 啟動檔案匯入</button>
+            <button class="login-btn" id="btn-import-members" style="width: auto; padding: 12px 30px;" onclick="importMembers()">🚀 啟怒檔案匯入</button>
           </div>
         </div>
 
@@ -323,10 +332,10 @@
     let editOriginalName = ""; 
     let editOriginalDay = "";
 
-    // 🌟 會員分頁全域變數
+    // 會員分頁全域變數
     let allMembersData = [];
     let currentMemberPage = 1;
-    const MEMBERS_PER_PAGE = 50; // 每頁顯示 50 筆學生資料
+    const MEMBERS_PER_PAGE = 50; 
 
     let idleTimer;
     const IDLE_TIMEOUT = 15 * 60 * 1000; 
@@ -366,16 +375,14 @@
       if(captchaInput !== currentCaptcha) { showError("驗證碼輸入錯誤"); generateCaptcha(); document.getElementById("captcha-input").value = ""; return; }
 
       const btn = document.querySelector(".login-btn");
-      btn.innerText = "登入驗證中..."; 
-      document.getElementById("login-error").style.display = "none";
+      btn.innerText = "登入驗證中..."; document.getElementById("login-error").style.display = "none";
       
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "adminLogin", username: user, password: pass }) })
       .then(res => res.json())
       .then(data => {
         if (data.success) { 
           sessionStorage.setItem("admin_token", data.token); 
-          showDashboard(); 
-          startIdleTimer(); 
+          showDashboard(); startIdleTimer(); 
         } else { 
           showError("帳號或密碼錯誤"); generateCaptcha(); document.getElementById("captcha-input").value = ""; btn.innerText = "登入系統"; 
         }
@@ -399,18 +406,21 @@
       document.getElementById(targetId).classList.add('active');
       
       if (targetId === 'tab-menus') fetchMenus();
-      if (targetId === 'tab-members') fetchAllMembers(); // 🌟 切換到會員分頁時，自動抓取名單
+      if (targetId === 'tab-members') fetchAllMembers(); 
     }
 
+    // --- 2. 營運總覽與訂單明細 ---
     function fetchDashboardData() {
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAdminDashboardData", token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          // 更新上方統計數字
           document.getElementById("dash-order-count").innerText = data.totalCount + " 筆";
           document.getElementById("dash-revenue").innerText = "$ " + data.totalRevenue;
-          const tbody = document.getElementById("order-list-body"); tbody.innerHTML = ""; 
           
+          // 更新訂單明細列表
+          const tbody = document.getElementById("order-list-body"); tbody.innerHTML = ""; 
           if (data.orders.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding: 30px;">今日目前尚無訂單</td></tr>'; 
           } else {
@@ -419,28 +429,69 @@
             });
           }
 
-          const statsContainer = document.getElementById("class-stats-container");
-          statsContainer.innerHTML = "";
-          const classes = Object.keys(data.classStats).sort();
+          // 🌟 動態繪製「交叉分析統計表」(Pivot Table)
+          const pivotTable = document.getElementById("dashboard-pivot-table");
+          const classes = Object.keys(data.classStats).sort(); // 依班級排序 (101, 102...)
           
-          if (classes.length === 0) {
-            statsContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #999;">今日目前尚無班級訂單</div>';
+          // 蒐集所有不重複的品項並取得對應價格
+          const itemPrices = {};
+          const uniqueItems = new Set();
+          data.orders.forEach(o => {
+            uniqueItems.add(o.item);
+            itemPrices[o.item] = o.price;
+          });
+          const items = Array.from(uniqueItems).sort();
+
+          if (classes.length === 0 || items.length === 0) {
+            pivotTable.innerHTML = '<tr><td style="padding:20px;color:#999;">今日尚無資料</td></tr>';
           } else {
-            classes.forEach(cls => {
-              const items = data.classStats[cls];
-              let itemsHtml = ""; let totalForClass = 0;
-              for (const [itemName, count] of Object.entries(items)) {
-                itemsHtml += `<div class="class-item-row"><span class="class-item-name">${itemName}</span><span class="class-item-count">${count} 份</span></div>`;
-                totalForClass += count;
-              }
-              statsContainer.innerHTML += `<div class="class-card"><div class="class-card-header">${cls} 班</div>${itemsHtml}<div class="class-card-total">本班總計：${totalForClass} 份</div></div>`;
+            // 繪製表頭
+            let html = '<thead><tr><th class="sticky-col">品項 \\ 班級</th>';
+            classes.forEach(cls => html += `<th>${cls}</th>`);
+            html += '<th class="row-total">總計</th></tr></thead><tbody>';
+
+            let grandTotalCount = 0;
+            const classTotalCounts = {};
+            const classTotalAmounts = {};
+            classes.forEach(c => { classTotalCounts[c] = 0; classTotalAmounts[c] = 0; });
+
+            // 繪製各品項列
+            items.forEach(item => {
+              let itemTotalCount = 0;
+              html += `<tr><td class="sticky-col">${item}</td>`;
+              classes.forEach(cls => {
+                const count = data.classStats[cls][item] || 0;
+                itemTotalCount += count;
+                classTotalCounts[cls] += count;
+                classTotalAmounts[cls] += count * (itemPrices[item] || 0);
+                html += `<td>${count > 0 ? count : ''}</td>`; // 數量為 0 時留白較清爽
+              });
+              grandTotalCount += itemTotalCount;
+              html += `<td class="row-total">${itemTotalCount}</td></tr>`;
             });
+
+            // 繪製底部統計 - 各班總份數
+            html += `<tr><td class="sticky-col col-total-count">各班總份數</td>`;
+            classes.forEach(cls => html += `<td class="col-total-count">${classTotalCounts[cls]}</td>`);
+            html += `<td class="col-total-count">${grandTotalCount}</td></tr>`;
+
+            // 繪製底部統計 - 各班總金額
+            let grandTotalAmount = 0;
+            html += `<tr><td class="sticky-col col-total-amount">各班總金額</td>`;
+            classes.forEach(cls => { 
+              html += `<td class="col-total-amount">$${classTotalAmounts[cls]}</td>`; 
+              grandTotalAmount += classTotalAmounts[cls];
+            });
+            html += `<td class="col-total-amount">$${grandTotalAmount}</td></tr></tbody>`;
+
+            pivotTable.innerHTML = html;
           }
+
         } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
       });
     }
 
-    // === 🌟 升級版：會員與儲值管理 ===
+    // --- 3. 會員與儲值管理 ---
     function searchMember() {
       const studentId = document.getElementById("search-uid-input").value;
       if (!studentId) return;
@@ -452,24 +503,9 @@
           document.getElementById("mem-id").innerText = studentId;
           document.getElementById("mem-balance").innerText = "$ " + data.balance;
           document.getElementById("member-info-card").style.display = "block";
-          document.getElementById("trade-amount").value = ""; currentActiveStudent = studentId;
+          currentActiveStudent = studentId;
         } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
         else { alert("查無此學號"); }
-      });
-    }
-
-    function processTrade(type) {
-      const amount = document.getElementById("trade-amount").value;
-      if (!amount || amount <= 0) return;
-      if (!confirm(`確定要為學號 ${currentActiveStudent} 進行作業，金額 $${amount} 嗎？`)) return;
-      fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "updateBalance", studentId: currentActiveStudent, amount: amount, type: type, token: sessionStorage.getItem("admin_token") }) })
-      .then(res => res.json())
-      .then(data => { 
-        if (data.success) { 
-          alert(data.message); 
-          searchMember(); 
-          fetchAllMembers(); // 同步更新下方表格
-        } else { alert(data.message); if (data.message.includes("⛔")) logout(); } 
       });
     }
 
@@ -480,14 +516,12 @@
       .then(res => res.json())
       .then(data => { 
         if (data.success) {
-          alert(data.message); 
-          fetchAllMembers(); // 同步更新下方表格
+          alert(data.message); fetchAllMembers(); 
         } else { alert("發生錯誤：" + data.message); if (data.message.includes("⛔")) logout(); } 
       })
       .catch(err => { alert("網路連線失敗"); });
     }
 
-    // 🌟 獲取全校名單
     function fetchAllMembers() {
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "getAllMembers", token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
@@ -500,7 +534,6 @@
       });
     }
 
-    // 🌟 渲染名單表格與分頁邏輯
     function renderMemberTable() {
       const tbody = document.getElementById("member-list-body");
       const totalCount = allMembersData.length;
@@ -509,8 +542,7 @@
       if (totalCount === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">目前尚無會員資料，請先匯入基本資料。</td></tr>';
         document.getElementById("member-page-info").innerText = "第 1 / 1 頁";
-        document.getElementById("btn-prev-page").disabled = true;
-        document.getElementById("btn-next-page").disabled = true;
+        document.getElementById("btn-prev-page").disabled = true; document.getElementById("btn-next-page").disabled = true;
         return;
       }
 
@@ -529,51 +561,26 @@
       for (let i = startIndex; i < endIndex; i++) {
         const m = allMembersData[i];
         const statusColor = m.isBound === "已綁定" ? "#52c41a" : "#999";
-        tbody.innerHTML += `
-          <tr>
-            <td>${m.className}</td>
-            <td>${m.studentId}</td>
-            <td>${m.name}</td>
+        tbody.innerHTML += `<tr>
+            <td>${m.className}</td><td>${m.studentId}</td><td>${m.name}</td>
             <td style="color:#ff8c00; font-weight:bold;">$${m.balance}</td>
             <td><span style="color:${statusColor}; border:1px solid ${statusColor}; padding:2px 8px; border-radius:12px; font-size:12px;">${m.isBound}</span></td>
             <td><button style="background:#e6f7ff; color:#1890ff; border:1px solid #91d5ff; padding:4px 10px; border-radius:4px; cursor:pointer;" onclick="fillAndSearch('${m.studentId}')">快速管理</button></td>
-          </tr>
-        `;
+          </tr>`;
       }
     }
 
-    function changeMemberPage(delta) {
-      currentMemberPage += delta;
-      renderMemberTable();
-    }
+    function changeMemberPage(delta) { currentMemberPage += delta; renderMemberTable(); }
+    function fillAndSearch(studentId) { document.getElementById("search-uid-input").value = studentId; searchMember(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-    // 🌟 點擊表格的「快速管理」自動帶入上方搜尋框
-    function fillAndSearch(studentId) {
-      document.getElementById("search-uid-input").value = studentId;
-      searchMember();
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // 自動捲動到最上方
-    }
-
-    // 🌟 一鍵匯出全校會員資料為 CSV
     function exportMembersListCSV() {
-      if (allMembersData.length === 0) {
-        alert("目前沒有會員資料可匯出！");
-        return;
-      }
-      let csvContent = "\uFEFF班級,學號,姓名,儲值餘額,LINE 綁定狀態\n";
-      allMembersData.forEach(m => {
-        csvContent += `${m.className},${m.studentId},${m.name},${m.balance},${m.isBound}\n`;
-      });
-
+      if (allMembersData.length === 0) { alert("目前沒有會員資料可匯出！"); return; }
+      let csvContent = "\uFEFF班級,學號,姓名,儲值餘額,LINE 綁定狀態\r\n";
+      allMembersData.forEach(m => { csvContent += `${m.className},${m.studentId},${m.name},${m.balance},${m.isBound}\r\n`; });
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
+      const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
       link.setAttribute("download", `雄商合作社_全校會員名單_${new Date().toLocaleDateString().replace(/\//g, '')}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
 
     // --- 4. 菜單與餐點管理 ---
@@ -586,25 +593,17 @@
         if (data.success) {
           container.innerHTML = "";
           if (data.menus.length === 0) { container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;">目前沒有餐點</div>'; return; }
-          
           data.menus.forEach(menu => {
             const fallbackImg = "https://images.unsplash.com/photo-1547573854-74d2a71d0826?q=80&w=600";
             const safeName = menu.name.replace(/'/g, "\\'"); const safeDesc = menu.desc.replace(/'/g, "\\'"); const safeImage = menu.image.replace(/'/g, "\\'");
             const displayDays = menu.day.replace(/星期/g, "").replace(/,/g, ", ");
-            const isHidden = (menu.status === "下架");
-            const cardClass = isHidden ? "menu-card hidden-item" : "menu-card";
+            const isHidden = (menu.status === "下架"); const cardClass = isHidden ? "menu-card hidden-item" : "menu-card";
             const statusBadge = isHidden ? `<div class="menu-card-status status-hidden">已下架</div>` : `<div class="menu-card-status status-active">上架中</div>`;
             const toggleIcon = isHidden ? "👁️ 重新上架" : "🚫 隱藏下架";
-
             container.innerHTML += `
-              <div class="${cardClass}" style="border-top: 5px solid ${menu.color};">
-                ${statusBadge}
-                <div class="menu-card-day">${displayDays}</div>
+              <div class="${cardClass}" style="border-top: 5px solid ${menu.color};">${statusBadge}<div class="menu-card-day">${displayDays}</div>
                 <img src="${menu.image}" class="menu-card-img" onerror="this.src='${fallbackImg}'">
-                <div class="menu-card-body">
-                  <div class="menu-card-title">${menu.name}</div>
-                  <div class="menu-card-price">$${menu.price}</div>
-                  <div class="menu-card-desc">${menu.desc}</div>
+                <div class="menu-card-body"><div class="menu-card-title">${menu.name}</div><div class="menu-card-price">$${menu.price}</div><div class="menu-card-desc">${menu.desc}</div>
                   <div class="card-actions">
                     <button class="btn-toggle-menu" onclick="toggleMenuStatus('${safeName}')">${toggleIcon}</button>
                     <button class="btn-edit-menu" onclick="startEditMenu('${menu.day}', '${safeName}', '${menu.price}', '${safeDesc}', '${safeImage}', '${menu.color}')">✏️ 編輯</button>
@@ -633,39 +632,26 @@
       document.getElementById("menu-form-title").innerText = "✏️ 編輯餐點";
       const checkboxes = document.querySelectorAll('#new-menu-days input[type="checkbox"]');
       checkboxes.forEach(cb => cb.checked = daysStr.includes(cb.value));
-      document.getElementById("new-menu-name").value = name;
-      document.getElementById("new-menu-price").value = price; 
-      document.getElementById("new-menu-desc").value = desc;
-      document.getElementById("new-menu-img").value = image.includes("unsplash.com") ? "" : image;
+      document.getElementById("new-menu-name").value = name; document.getElementById("new-menu-price").value = price; 
+      document.getElementById("new-menu-desc").value = desc; document.getElementById("new-menu-img").value = image.includes("unsplash.com") ? "" : image;
       document.getElementById("new-menu-color").value = color;
-      
       const btn = document.getElementById("btn-submit-menu");
-      btn.innerText = "💾 儲存修改內容"; btn.style.backgroundColor = "#ff8c00";
-      document.getElementById("btn-cancel-edit").style.display = "block";
+      btn.innerText = "💾 儲存修改內容"; btn.style.backgroundColor = "#ff8c00"; document.getElementById("btn-cancel-edit").style.display = "block";
     }
 
     function cancelEdit() {
-      isEditingMenu = false; editOriginalName = ""; editOriginalDay = "";
-      document.getElementById("menu-form-title").innerText = "➕ 新增餐點";
+      isEditingMenu = false; editOriginalName = ""; editOriginalDay = ""; document.getElementById("menu-form-title").innerText = "➕ 新增餐點";
       document.querySelectorAll('#new-menu-days input[type="checkbox"]').forEach(cb => cb.checked = false);
       document.getElementById("new-menu-name").value = ""; document.getElementById("new-menu-price").value = "";
-      document.getElementById("new-menu-desc").value = ""; document.getElementById("new-menu-img").value = ""; 
-      document.getElementById("new-menu-color").value = "#1DB446";
-      
+      document.getElementById("new-menu-desc").value = ""; document.getElementById("new-menu-img").value = ""; document.getElementById("new-menu-color").value = "#1DB446";
       const btn = document.getElementById("btn-submit-menu");
-      btn.innerText = "🚀 確認上架餐點"; btn.style.backgroundColor = "#6B4FA2"; btn.disabled = false; 
-      document.getElementById("btn-cancel-edit").style.display = "none";
+      btn.innerText = "🚀 確認上架餐點"; btn.style.backgroundColor = "#6B4FA2"; btn.disabled = false; document.getElementById("btn-cancel-edit").style.display = "none";
     }
 
     function submitMenu() {
       const btn = document.getElementById("btn-submit-menu");
       const checkedDays = Array.from(document.querySelectorAll('#new-menu-days input[type="checkbox"]:checked')).map(cb => cb.value).join(",");
-      const menuData = {
-        day: checkedDays, name: document.getElementById("new-menu-name").value,
-        price: document.getElementById("new-menu-price").value, desc: document.getElementById("new-menu-desc").value,
-        image: document.getElementById("new-menu-img").value, color: document.getElementById("new-menu-color").value
-      };
-      
+      const menuData = { day: checkedDays, name: document.getElementById("new-menu-name").value, price: document.getElementById("new-menu-price").value, desc: document.getElementById("new-menu-desc").value, image: document.getElementById("new-menu-img").value, color: document.getElementById("new-menu-color").value };
       if (!menuData.day) { alert("請至少勾選一個供應星期！"); return; }
       if (!menuData.name || !menuData.price || !menuData.desc) { alert("請填寫完整餐點資訊！"); return; }
       
@@ -682,35 +668,79 @@
       .catch(err => { alert("網路連線發生錯誤，請稍後再試。"); btn.innerText = isEditingMenu ? "💾 儲存修改" : "🚀 確認上架"; btn.disabled = false; });
     }
 
-    // --- 5. 報表匯出與批次匯入 ---
-    function exportOrdersCSV() {
-      const startDate = document.getElementById("export-start-date").value;
-      const endDate = document.getElementById("export-end-date").value;
-      const btn = document.getElementById("btn-export-csv");
+    // --- 5. 🌟 升級版：結帳報表匯出 ---
+    function exportCheckoutCSV(type) {
+      let startDate = "", endDate = "";
+      const btn = type === 'today' ? document.activeElement : document.getElementById("btn-export-csv-range");
+      const originalText = btn.innerText;
 
-      if (!startDate || !endDate) { alert("請先選擇起始與結束日期！"); return; }
-      if (startDate > endDate) { alert("起始日期不能晚於結束日期喔！"); return; }
+      if (type === 'today') {
+        // 設定當日日期
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        startDate = `${yyyy}-${mm}-${dd}`;
+        endDate = startDate;
+      } else {
+        // 抓取區間日期
+        startDate = document.getElementById("export-start-date").value;
+        endDate = document.getElementById("export-end-date").value;
+        if (!startDate || !endDate) { alert("請先選擇起始與結束日期！"); return; }
+        if (startDate > endDate) { alert("起始日期不能晚於結束日期喔！"); return; }
+      }
 
-      btn.innerText = "⏳ 報表跨庫搜尋與產生中..."; btn.disabled = true;
+      btn.innerText = "⏳ 結算運算中..."; 
+      btn.disabled = true;
 
       fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "exportOrders", startDate: startDate, endDate: endDate, token: sessionStorage.getItem("admin_token") }) })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data.length > 1) { 
-          let csvContent = "\uFEFF"; 
-          data.data.forEach(function(rowArray) {
-             let row = rowArray.map(item => `"${String(item).replace(/"/g, '""')}"`).join(",");
-             csvContent += row + "\r\n";
-          });
+          
+          // 邏輯處理：將同一位學號的扣款金額進行加總
+          const studentTotals = {};
+          // data.data 的結構為: ["時間", "學號", "訂購品項", "扣款金額", "班級", "姓名"]
+          for(let i = 1; i < data.data.length; i++) {
+             const row = data.data[i];
+             const sid = row[1];
+             const amount = parseInt(row[3]) || 0;
+             if (sid) {
+                 studentTotals[sid] = (studentTotals[sid] || 0) + amount;
+             }
+          }
+
+          // 組裝指定的 CSV 格式: A欄位(學號), B欄位(當日訂購須扣除金額)
+          let csvContent = "\uFEFF學號,當日訂購須扣除金額\r\n";
+          for (const [sid, total] of Object.entries(studentTotals)) {
+              csvContent += `${sid},${total}\r\n`;
+          }
+
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement("a"); const url = URL.createObjectURL(blob);
-          link.setAttribute("href", url); link.setAttribute("download", `雄商合作社_區間報表_${startDate}_至_${endDate}.csv`);
-          link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-        } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
-        else { alert("這段期間內，系統找不到任何訂單資料喔！"); }
-        btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; btn.disabled = false;
+          const link = document.createElement("a"); 
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url); 
+          
+          const dateSuffix = type === 'today' ? startDate : `${startDate}_至_${endDate}`;
+          link.setAttribute("download", `雄商合作社_結帳報表_${dateSuffix}.csv`);
+          link.style.visibility = 'hidden'; 
+          document.body.appendChild(link); 
+          link.click(); 
+          document.body.removeChild(link);
+          
+        } else if (data.message && data.message.includes("⛔")) { 
+          alert(data.message); logout(); 
+        } else { 
+          alert("這段期間內，系統找不到任何訂單資料喔！"); 
+        }
+        btn.innerText = originalText; 
+        btn.disabled = false;
       })
-      .catch(err => { alert("匯出失敗，請檢查網路連線。"); btn.innerText = "📥 點此下載自訂區間報表 (.csv)"; btn.disabled = false; });
+      .catch(err => { 
+        alert("匯出失敗，請檢查網路連線。"); 
+        btn.innerText = originalText; 
+        btn.disabled = false; 
+      });
     }
 
     function downloadImportTemplate() {
@@ -743,7 +773,7 @@
         fetch(gasUrl, { method: "POST", body: JSON.stringify({ action: "importMembers", members: membersToImport, token: sessionStorage.getItem("admin_token") }) })
         .then(res => res.json())
         .then(data => {
-          if (data.success) { alert(data.message); document.getElementById("import-file").value = ""; } 
+          if (data.success) { alert(data.message); document.getElementById("import-file").value = ""; fetchAllMembers(); } 
           else { alert("匯入失敗: " + data.message); if (data.message.includes("⛔")) logout(); }
           btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false;
         }).catch(err => { alert("匯入連線錯誤"); btn.innerText = "🚀 啟動檔案匯入"; btn.disabled = false; });
