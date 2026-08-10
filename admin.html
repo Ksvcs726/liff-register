@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雄商合作社 | 後台管理系統</title>
+  <!-- 🌟 引入 SheetJS 套件，賦予網頁直接產生 Excel 檔案的超能力 -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
     
@@ -49,7 +51,6 @@
     .stat-value { color: #6B4FA2; font-size: 32px; font-weight: bold; }
     .stat-value.money { color: #ff8c00; }
     
-    /* 🌟 新增：交叉分析統計表 CSS */
     .pivot-table-container { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); padding: 25px; margin-top: 30px;}
     .pivot-table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; font-size: 15px;}
     .pivot-table th, .pivot-table td { border: 1px solid #e8e8e8; padding: 12px; }
@@ -174,12 +175,14 @@
             <div class="stat-card"><span class="stat-title">今日預估營業額</span><span class="stat-value money" id="dash-revenue">$ --</span></div>
           </div>
           
-          <!-- 🌟 升級版：動態交叉分析統計表 -->
           <div class="pivot-table-container">
-            <div style="font-size: 18px; font-weight: bold; color: #333; margin-bottom: 20px;">📊 今日各班訂購總表 (交叉分析)</div>
+            <!-- 🌟 新增：神還原 Excel 的匯出按鈕 -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+              <div style="font-size: 18px; font-weight: bold; color: #333;">📊 今日各班訂購總表 (交叉分析)</div>
+              <button class="export-btn" style="background:#107c41; padding: 10px 20px; font-size: 15px; border-radius: 6px;" onclick="exportDashboardExcel()">📗 匯出今日訂購報表 (.xlsx)</button>
+            </div>
             <div style="overflow-x:auto;">
               <table class="pivot-table" id="dashboard-pivot-table">
-                <!-- 資料將由 JS 自動繪製 -->
                 <tr><td style="color:#999;">資料載入中...</td></tr>
               </table>
             </div>
@@ -211,7 +214,7 @@
             <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin-top:20px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="info-label">⚙️ 帳號管理</span>
-                <!-- 🌟 精簡版：只保留解除 LINE 綁定按鈕 -->
+                <!-- 🌟 精簡版：已移除加扣款，僅保留解除 LINE 綁定 -->
                 <button style="background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="unbindMemberLINE()" onmouseover="this.style.background='#ff4d4f'; this.style.color='white';" onmouseout="this.style.background='#fff1f0'; this.style.color='#ff4d4f';">🔌 解除 LINE 綁定</button>
               </div>
             </div>
@@ -281,7 +284,6 @@
 
         <!-- 模組 5: 報表與批次匯入 -->
         <div id="tab-reports" class="tab-content">
-          <!-- 🌟 升級版：結帳報表專屬匯出 -->
           <div class="report-card">
             <h3>📊 結帳報表匯出 (格式：學號, 當日訂購須扣除金額)</h3>
             <p style="color: #666; font-size: 14px; margin-bottom: 20px;">系統將自動加總每位學生在選定期間內的總扣除金額。</p>
@@ -314,7 +316,7 @@
               <button class="template-btn" onclick="downloadImportTemplate()">📄 下載 CSV 格式範例檔</button>
             </div>
             <div class="file-upload-box"><input type="file" id="import-file" accept=".csv"></div>
-            <button class="login-btn" id="btn-import-members" style="width: auto; padding: 12px 30px;" onclick="importMembers()">🚀 啟怒檔案匯入</button>
+            <button class="login-btn" id="btn-import-members" style="width: auto; padding: 12px 30px;" onclick="importMembers()">🚀 啟動檔案匯入</button>
           </div>
         </div>
 
@@ -415,11 +417,11 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          // 更新上方統計數字
+          window.dashboardData = data; // 🌟 儲存進全域變數，供稍後產生 Excel 使用
+
           document.getElementById("dash-order-count").innerText = data.totalCount + " 筆";
           document.getElementById("dash-revenue").innerText = "$ " + data.totalRevenue;
           
-          // 更新訂單明細列表
           const tbody = document.getElementById("order-list-body"); tbody.innerHTML = ""; 
           if (data.orders.length === 0) { 
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding: 30px;">今日目前尚無訂單</td></tr>'; 
@@ -429,55 +431,43 @@
             });
           }
 
-          // 🌟 動態繪製「交叉分析統計表」(Pivot Table)
           const pivotTable = document.getElementById("dashboard-pivot-table");
-          const classes = Object.keys(data.classStats).sort(); // 依班級排序 (101, 102...)
-          
-          // 蒐集所有不重複的品項並取得對應價格
+          const classes = Object.keys(data.classStats).sort(); 
           const itemPrices = {};
           const uniqueItems = new Set();
-          data.orders.forEach(o => {
-            uniqueItems.add(o.item);
-            itemPrices[o.item] = o.price;
-          });
+          data.orders.forEach(o => { uniqueItems.add(o.item); itemPrices[o.item] = o.price; });
           const items = Array.from(uniqueItems).sort();
 
           if (classes.length === 0 || items.length === 0) {
             pivotTable.innerHTML = '<tr><td style="padding:20px;color:#999;">今日尚無資料</td></tr>';
           } else {
-            // 繪製表頭
             let html = '<thead><tr><th class="sticky-col">品項 \\ 班級</th>';
             classes.forEach(cls => html += `<th>${cls}</th>`);
-            html += '<th class="row-total">總計</th></tr></thead><tbody>';
+            html += '<th class="row-total">各班總計</th></tr></thead><tbody>';
 
             let grandTotalCount = 0;
             const classTotalCounts = {};
             const classTotalAmounts = {};
             classes.forEach(c => { classTotalCounts[c] = 0; classTotalAmounts[c] = 0; });
 
-            // 繪製各品項列
             items.forEach(item => {
               let itemTotalCount = 0;
               html += `<tr><td class="sticky-col">${item}</td>`;
               classes.forEach(cls => {
                 const count = data.classStats[cls][item] || 0;
-                itemTotalCount += count;
-                classTotalCounts[cls] += count;
-                classTotalAmounts[cls] += count * (itemPrices[item] || 0);
-                html += `<td>${count > 0 ? count : ''}</td>`; // 數量為 0 時留白較清爽
+                itemTotalCount += count; classTotalCounts[cls] += count; classTotalAmounts[cls] += count * (itemPrices[item] || 0);
+                html += `<td>${count > 0 ? count : ''}</td>`; 
               });
               grandTotalCount += itemTotalCount;
               html += `<td class="row-total">${itemTotalCount}</td></tr>`;
             });
 
-            // 繪製底部統計 - 各班總份數
-            html += `<tr><td class="sticky-col col-total-count">各班總份數</td>`;
+            html += `<tr><td class="sticky-col col-total-count">各班個數:</td>`;
             classes.forEach(cls => html += `<td class="col-total-count">${classTotalCounts[cls]}</td>`);
             html += `<td class="col-total-count">${grandTotalCount}</td></tr>`;
 
-            // 繪製底部統計 - 各班總金額
             let grandTotalAmount = 0;
-            html += `<tr><td class="sticky-col col-total-amount">各班總金額</td>`;
+            html += `<tr><td class="sticky-col col-total-amount">各班金額:</td>`;
             classes.forEach(cls => { 
               html += `<td class="col-total-amount">$${classTotalAmounts[cls]}</td>`; 
               grandTotalAmount += classTotalAmounts[cls];
@@ -486,9 +476,90 @@
 
             pivotTable.innerHTML = html;
           }
-
         } else if (data.message && data.message.includes("⛔")) { alert(data.message); logout(); }
       });
+    }
+
+    // 🌟 新增：利用 SheetJS 強大功能，直接在網頁端還原輸出 Excel
+    function exportDashboardExcel() {
+      if (!window.dashboardData || window.dashboardData.orders.length === 0) {
+        alert("今日尚無訂單可匯出！");
+        return;
+      }
+      
+      const data = window.dashboardData;
+      const classes = Object.keys(data.classStats).sort();
+      const itemPrices = {};
+      const uniqueItems = new Set();
+      data.orders.forEach(o => {
+        uniqueItems.add(o.item);
+        itemPrices[o.item] = o.price;
+      });
+      const items = Array.from(uniqueItems).sort();
+
+      const today = new Date();
+      // 輸出格式： 2026-06-29
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      
+      // 構建第一張分頁：各班訂購總表 (AoA：Array of Arrays 格式)
+      const aoa = [];
+      aoa.push([`${dateStr} 雄商便當訂購統計`]); // 第 1 列: 標題
+      
+      const headerRow = [""];
+      classes.forEach(c => headerRow.push(c));
+      headerRow.push("各班總計");
+      aoa.push(headerRow); // 第 2 列: 班級表頭
+      
+      let grandTotalCount = 0;
+      const classTotalCounts = {};
+      const classTotalAmounts = {};
+      classes.forEach(c => { classTotalCounts[c] = 0; classTotalAmounts[c] = 0; });
+      
+      items.forEach(item => {
+        const row = [item];
+        let itemTotal = 0;
+        classes.forEach(cls => {
+          const count = data.classStats[cls][item] || 0;
+          row.push(count); // Excel 中 0 照樣顯示
+          itemTotal += count;
+          classTotalCounts[cls] += count;
+          classTotalAmounts[cls] += count * (itemPrices[item] || 0);
+        });
+        row.push(itemTotal);
+        grandTotalCount += itemTotal;
+        aoa.push(row);
+      });
+      
+      const countRow = ["各班個數:"];
+      classes.forEach(c => countRow.push(classTotalCounts[c]));
+      countRow.push(grandTotalCount);
+      aoa.push(countRow);
+      
+      const amountRow = ["各班金額:"];
+      let grandTotalAmount = 0;
+      classes.forEach(c => {
+        amountRow.push(classTotalAmounts[c]);
+        grandTotalAmount += classTotalAmounts[c];
+      });
+      amountRow.push(grandTotalAmount);
+      aoa.push(amountRow);
+
+      // 構建第二張分頁：完整的訂單明細
+      const detailsAoA = [["時間", "班級", "學號", "姓名", "訂購品項", "金額"]];
+      data.orders.forEach(o => {
+        const parts = o.classInfo.split(" | "); 
+        detailsAoA.push([o.time, parts[0], parts[1], parts[2], o.item, o.price]);
+      });
+
+      // 產生 Excel 檔案
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, ws1, "各班訂購總表");
+      
+      const ws2 = XLSX.utils.aoa_to_sheet(detailsAoA);
+      XLSX.utils.book_append_sheet(wb, ws2, "訂單明細");
+
+      XLSX.writeFile(wb, `雄商便當訂購統計_${dateStr}.xlsx`);
     }
 
     // --- 3. 會員與儲值管理 ---
@@ -668,14 +739,13 @@
       .catch(err => { alert("網路連線發生錯誤，請稍後再試。"); btn.innerText = isEditingMenu ? "💾 儲存修改" : "🚀 確認上架"; btn.disabled = false; });
     }
 
-    // --- 5. 🌟 升級版：結帳報表匯出 ---
+    // --- 5. 結帳報表專屬匯出 ---
     function exportCheckoutCSV(type) {
       let startDate = "", endDate = "";
       const btn = type === 'today' ? document.activeElement : document.getElementById("btn-export-csv-range");
       const originalText = btn.innerText;
 
       if (type === 'today') {
-        // 設定當日日期
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -683,7 +753,6 @@
         startDate = `${yyyy}-${mm}-${dd}`;
         endDate = startDate;
       } else {
-        // 抓取區間日期
         startDate = document.getElementById("export-start-date").value;
         endDate = document.getElementById("export-end-date").value;
         if (!startDate || !endDate) { alert("請先選擇起始與結束日期！"); return; }
@@ -698,9 +767,7 @@
       .then(data => {
         if (data.success && data.data.length > 1) { 
           
-          // 邏輯處理：將同一位學號的扣款金額進行加總
           const studentTotals = {};
-          // data.data 的結構為: ["時間", "學號", "訂購品項", "扣款金額", "班級", "姓名"]
           for(let i = 1; i < data.data.length; i++) {
              const row = data.data[i];
              const sid = row[1];
@@ -710,7 +777,6 @@
              }
           }
 
-          // 組裝指定的 CSV 格式: A欄位(學號), B欄位(當日訂購須扣除金額)
           let csvContent = "\uFEFF學號,當日訂購須扣除金額\r\n";
           for (const [sid, total] of Object.entries(studentTotals)) {
               csvContent += `${sid},${total}\r\n`;
