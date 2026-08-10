@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>雄商合作社 | 後台管理系統</title>
-  <!-- 🌟 引入 SheetJS 套件，賦予網頁直接產生 Excel 檔案的超能力 -->
+  <!-- 🌟 引入 SheetJS 套件 -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
@@ -176,10 +176,10 @@
           </div>
           
           <div class="pivot-table-container">
-            <!-- 🌟 新增：神還原 Excel 的匯出按鈕 -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
               <div style="font-size: 18px; font-weight: bold; color: #333;">📊 今日各班訂購總表 (交叉分析)</div>
-              <button class="export-btn" style="background:#107c41; padding: 10px 20px; font-size: 15px; border-radius: 6px;" onclick="exportDashboardExcel()">📗 匯出今日訂購報表 (.xlsx)</button>
+              <!-- 🌟 匯出多張工作表的按鈕 -->
+              <button class="export-btn" style="background:#107c41; padding: 10px 20px; font-size: 15px; border-radius: 6px;" onclick="exportDashboardExcel()">📗 匯出全套訂購統計報表 (.xlsx)</button>
             </div>
             <div style="overflow-x:auto;">
               <table class="pivot-table" id="dashboard-pivot-table">
@@ -191,7 +191,13 @@
 
         <!-- 模組 2: 訂單明細管理 -->
         <div id="tab-orders" class="tab-content">
-          <div class="table-container">
+          <!-- 🌟 訂單專屬搜尋列 -->
+          <div class="member-search-box" style="margin-top: 0;">
+            <input type="text" id="search-order-input" placeholder="請輸入班級、學號或姓名 (例如: 101 或 150001)" onkeypress="if(event.key === 'Enter') renderOrderTable()">
+            <button onclick="renderOrderTable()">🔍 查詢訂單</button>
+            <button class="btn-export-members" onclick="exportOrdersListCSV()">📥 匯出查詢結果 (.csv)</button>
+          </div>
+          <div class="table-container" style="margin-top: 0;">
             <table class="data-table">
               <thead><tr><th>時間</th><th>班級 / 學號 / 姓名</th><th>訂購品項</th><th>扣款金額</th></tr></thead>
               <tbody id="order-list-body"></tbody>
@@ -214,13 +220,12 @@
             <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin-top:20px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="info-label">⚙️ 帳號管理</span>
-                <!-- 🌟 精簡版：已移除加扣款，僅保留解除 LINE 綁定 -->
                 <button style="background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;" onclick="unbindMemberLINE()" onmouseover="this.style.background='#ff4d4f'; this.style.color='white';" onmouseout="this.style.background='#fff1f0'; this.style.color='#ff4d4f';">🔌 解除 LINE 綁定</button>
               </div>
             </div>
           </div>
 
-          <div class="table-container" id="member-list-container">
+          <div class="table-container" id="member-list-container" style="margin-top: 0;">
             <div style="padding: 15px 20px; background: #f8f9fa; border-bottom: 2px solid #eee; font-weight: bold; color: #333; display: flex; justify-content: space-between; align-items: center;">
               <span>📋 全校會員名單</span>
               <span id="total-members-count" style="color: #888; font-size: 14px;">共 0 筆</span>
@@ -334,10 +339,13 @@
     let editOriginalName = ""; 
     let editOriginalDay = "";
 
-    // 會員分頁全域變數
+    // 分頁全域變數
     let allMembersData = [];
     let currentMemberPage = 1;
     const MEMBERS_PER_PAGE = 50; 
+    
+    // 訂單全域變數
+    let allOrdersData = [];
 
     let idleTimer;
     const IDLE_TIMEOUT = 15 * 60 * 1000; 
@@ -417,19 +425,14 @@
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          window.dashboardData = data; // 🌟 儲存進全域變數，供稍後產生 Excel 使用
+          window.dashboardData = data; 
+          allOrdersData = data.orders; // 存入全域變數供搜尋使用
 
           document.getElementById("dash-order-count").innerText = data.totalCount + " 筆";
           document.getElementById("dash-revenue").innerText = "$ " + data.totalRevenue;
           
-          const tbody = document.getElementById("order-list-body"); tbody.innerHTML = ""; 
-          if (data.orders.length === 0) { 
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding: 30px;">今日目前尚無訂單</td></tr>'; 
-          } else {
-            data.orders.forEach(order => { 
-              tbody.innerHTML += `<tr><td>${order.time}</td><td>${order.classInfo}</td><td>${order.item}</td><td style="color:#ff4d4f; font-weight:bold;">$${order.price}</td></tr>`; 
-            });
-          }
+          // 渲染訂單列表 (包含搜尋功能)
+          renderOrderTable();
 
           const pivotTable = document.getElementById("dashboard-pivot-table");
           const classes = Object.keys(data.classStats).sort(); 
@@ -462,12 +465,12 @@
               html += `<td class="row-total">${itemTotalCount}</td></tr>`;
             });
 
-            html += `<tr><td class="sticky-col col-total-count">各班個數:</td>`;
+            html += `<tr><td class="sticky-col col-total-count">各班份數</td>`;
             classes.forEach(cls => html += `<td class="col-total-count">${classTotalCounts[cls]}</td>`);
             html += `<td class="col-total-count">${grandTotalCount}</td></tr>`;
 
             let grandTotalAmount = 0;
-            html += `<tr><td class="sticky-col col-total-amount">各班金額:</td>`;
+            html += `<tr><td class="sticky-col col-total-amount">各班金額</td>`;
             classes.forEach(cls => { 
               html += `<td class="col-total-amount">$${classTotalAmounts[cls]}</td>`; 
               grandTotalAmount += classTotalAmounts[cls];
@@ -480,7 +483,56 @@
       });
     }
 
-    // 🌟 新增：利用 SheetJS 強大功能，直接在網頁端還原輸出 Excel
+    // 🌟 訂單明細搜尋與過濾渲染
+    function renderOrderTable() {
+      const keyword = (document.getElementById("search-order-input") ? document.getElementById("search-order-input").value.trim() : "");
+      const tbody = document.getElementById("order-list-body");
+      tbody.innerHTML = "";
+
+      let filteredOrders = allOrdersData;
+      if (keyword) {
+        filteredOrders = allOrdersData.filter(o => o.classInfo.includes(keyword) || o.item.includes(keyword));
+      }
+
+      if (filteredOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999; padding: 30px;">尚無符合的訂單資料</td></tr>';
+      } else {
+        filteredOrders.forEach(order => {
+          tbody.innerHTML += `<tr><td>${order.time}</td><td>${order.classInfo}</td><td>${order.item}</td><td style="color:#ff4d4f; font-weight:bold;">$${order.price}</td></tr>`;
+        });
+      }
+    }
+
+    // 🌟 匯出當前搜尋結果的訂單明細 CSV
+    function exportOrdersListCSV() {
+      const keyword = (document.getElementById("search-order-input") ? document.getElementById("search-order-input").value.trim() : "");
+      let filteredOrders = allOrdersData;
+      if (keyword) {
+        filteredOrders = allOrdersData.filter(o => o.classInfo.includes(keyword) || o.item.includes(keyword));
+      }
+
+      if (filteredOrders.length === 0) {
+        alert("目前沒有資料可匯出！");
+        return;
+      }
+
+      let csvContent = "\uFEFF時間,班級,學號,姓名,訂購品項,扣款金額\r\n";
+      filteredOrders.forEach(o => {
+        const parts = o.classInfo.split(" | ");
+        csvContent += `${o.time},${parts[0] || ''},${parts[1] || ''},${parts[2] || ''},${o.item},${o.price}\r\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.setAttribute("href", URL.createObjectURL(blob));
+      link.setAttribute("download", `今日訂單查詢明細${keyword ? '_'+keyword : ''}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 🌟 利用 SheetJS 神還原輸出多張 Excel 報表
     function exportDashboardExcel() {
       if (!window.dashboardData || window.dashboardData.orders.length === 0) {
         alert("今日尚無訂單可匯出！");
@@ -488,77 +540,140 @@
       }
       
       const data = window.dashboardData;
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const wb = XLSX.utils.book_new();
+
       const classes = Object.keys(data.classStats).sort();
       const itemPrices = {};
       const uniqueItems = new Set();
-      data.orders.forEach(o => {
-        uniqueItems.add(o.item);
-        itemPrices[o.item] = o.price;
-      });
+      data.orders.forEach(o => { uniqueItems.add(o.item); itemPrices[o.item] = o.price; });
       const items = Array.from(uniqueItems).sort();
 
-      const today = new Date();
-      // 輸出格式： 2026-06-29
-      const dateStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-      
-      // 構建第一張分頁：各班訂購總表 (AoA：Array of Arrays 格式)
+      // 拆解廠商與 A/B 餐
+      const vendorData = {};
+      items.forEach(item => {
+        let vendor = item;
+        let meal = "A"; // 預設為 A餐
+        if (item.endsWith("A餐")) { vendor = item.replace("A餐", ""); meal = "A"; }
+        else if (item.endsWith("B餐")) { vendor = item.replace("B餐", ""); meal = "B"; }
+        else if (item.endsWith("素食")) { vendor = item; meal = "A"; } // 針對素食保持原樣
+
+        if (!vendorData[vendor]) vendorData[vendor] = { A: {}, B: {} };
+      });
+
+      classes.forEach(cls => {
+        items.forEach(item => {
+           let vendor = item; let meal = "A";
+           if (item.endsWith("A餐")) { vendor = item.replace("A餐", ""); meal = "A"; }
+           else if (item.endsWith("B餐")) { vendor = item.replace("B餐", ""); meal = "B"; }
+           else if (item.endsWith("素食")) { vendor = item; meal = "A"; }
+
+           const count = data.classStats[cls][item] || 0;
+           if (count > 0) {
+             if (!vendorData[vendor][meal][cls]) vendorData[vendor][meal][cls] = 0;
+             vendorData[vendor][meal][cls] += count;
+           }
+        });
+      });
+
+      // --- Sheet 1: 各班訂購統計 ---
       const aoa = [];
-      aoa.push([`${dateStr} 雄商便當訂購統計`]); // 第 1 列: 標題
-      
+      aoa.push([`${dateStr} 雄商便當訂購統計`]); 
       const headerRow = [""];
       classes.forEach(c => headerRow.push(c));
-      headerRow.push("各班總計");
-      aoa.push(headerRow); // 第 2 列: 班級表頭
+      aoa.push(headerRow); 
       
       let grandTotalCount = 0;
-      const classTotalCounts = {};
-      const classTotalAmounts = {};
+      const classTotalCounts = {}; const classTotalAmounts = {};
       classes.forEach(c => { classTotalCounts[c] = 0; classTotalAmounts[c] = 0; });
       
       items.forEach(item => {
         const row = [item];
-        let itemTotal = 0;
         classes.forEach(cls => {
           const count = data.classStats[cls][item] || 0;
-          row.push(count); // Excel 中 0 照樣顯示
-          itemTotal += count;
+          row.push(count); 
           classTotalCounts[cls] += count;
           classTotalAmounts[cls] += count * (itemPrices[item] || 0);
+          grandTotalCount += count;
         });
-        row.push(itemTotal);
-        grandTotalCount += itemTotal;
         aoa.push(row);
       });
       
-      const countRow = ["各班個數:"];
-      classes.forEach(c => countRow.push(classTotalCounts[c]));
-      countRow.push(grandTotalCount);
+      const countRow = ["各班個數:"]; classes.forEach(c => countRow.push(classTotalCounts[c]));
       aoa.push(countRow);
       
-      const amountRow = ["各班金額:"];
-      let grandTotalAmount = 0;
-      classes.forEach(c => {
-        amountRow.push(classTotalAmounts[c]);
-        grandTotalAmount += classTotalAmounts[c];
-      });
-      amountRow.push(grandTotalAmount);
+      const amountRow = ["各班金額:"]; classes.forEach(c => amountRow.push(classTotalAmounts[c]));
       aoa.push(amountRow);
 
-      // 構建第二張分頁：完整的訂單明細
-      const detailsAoA = [["時間", "班級", "學號", "姓名", "訂購品項", "金額"]];
-      data.orders.forEach(o => {
-        const parts = o.classInfo.split(" | "); 
-        detailsAoA.push([o.time, parts[0], parts[1], parts[2], o.item, o.price]);
+      const ws1 = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, ws1, "各班訂購統計");
+
+      // --- Sheet 2: 廠商統計 (依班級) ---
+      const vendorStatsAoA = [];
+      const vHeaderRow = [];
+      const columnsData = [];
+
+      Object.keys(vendorData).forEach(vendor => {
+        ['A', 'B'].forEach(meal => {
+          // 如果有該餐點的訂單，或是 A餐(強制顯示) 則繪製
+          if (Object.keys(vendorData[vendor][meal]).length > 0 || meal === 'A') {
+             vHeaderRow.push(`${vendor}-${meal}`, "");
+             const colData = [];
+             Object.keys(vendorData[vendor][meal]).sort().forEach(cls => {
+                colData.push([cls, vendorData[vendor][meal][cls]]);
+             });
+             columnsData.push(colData);
+          }
+        });
+      });
+      vendorStatsAoA.push(vHeaderRow);
+
+      let maxRows = 0;
+      columnsData.forEach(col => { if(col.length > maxRows) maxRows = col.length; });
+
+      for (let i = 0; i < maxRows; i++) {
+        const row = [];
+        columnsData.forEach(col => {
+          if (i < col.length) { row.push(col[i][0], col[i][1]); } 
+          else { row.push("", ""); }
+        });
+        vendorStatsAoA.push(row);
+      }
+      const ws2 = XLSX.utils.aoa_to_sheet(vendorStatsAoA);
+      XLSX.utils.book_append_sheet(wb, ws2, "廠商統計");
+
+      // --- Sheets 3+: 各廠商的統計表 (依廠商) ---
+      Object.keys(vendorData).forEach(vendor => {
+        const vAoA = [];
+        vAoA.push([`                ${vendor}`]); // 排版推齊
+        vAoA.push(["班級", "A", "B", "班級", "A", "B", "班級", "A", "B"]);
+
+        // 將 101~118, 201~218, 301~318 三區塊並排
+        for (let i = 1; i <= 18; i++) {
+          const row = [];
+          [100, 200, 300].forEach(base => {
+            const cls = (base + i).toString();
+            const countA = vendorData[vendor]['A'][cls] || "";
+            const countB = vendorData[vendor]['B'][cls] || "";
+            row.push(cls, countA, countB);
+          });
+          vAoA.push(row);
+        }
+
+        // 底部總結算
+        let totalA = 0, totalB = 0;
+        Object.values(vendorData[vendor]['A']).forEach(v => totalA+=v);
+        Object.values(vendorData[vendor]['B']).forEach(v => totalB+=v);
+        vAoA.push([]); // 空行
+        vAoA.push([`A餐共有${totalA}個`]);
+        vAoA.push([`B餐共有${totalB}個`]);
+
+        const wsV = XLSX.utils.aoa_to_sheet(vAoA);
+        XLSX.utils.book_append_sheet(wb, wsV, vendor);
       });
 
-      // 產生 Excel 檔案
-      const wb = XLSX.utils.book_new();
-      const ws1 = XLSX.utils.aoa_to_sheet(aoa);
-      XLSX.utils.book_append_sheet(wb, ws1, "各班訂購總表");
-      
-      const ws2 = XLSX.utils.aoa_to_sheet(detailsAoA);
-      XLSX.utils.book_append_sheet(wb, ws2, "訂單明細");
-
+      // --- 最後寫入檔案 ---
       XLSX.writeFile(wb, `雄商便當訂購統計_${dateStr}.xlsx`);
     }
 
